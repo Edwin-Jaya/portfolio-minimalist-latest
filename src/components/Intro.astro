@@ -1,0 +1,483 @@
+
+<div
+  data-intro-overlay
+  data-phase="typing"
+  aria-hidden="true"
+>
+  <div class="intro-stage">
+    <!-- Animated rectangular code panel -->
+    <div data-intro-frame class="intro-frame">
+      <canvas data-intro-canvas></canvas>
+    </div>
+
+    <!-- Typewriter title -->
+    <div class="intro-name">
+      <span data-intro-text></span>
+      <span data-intro-caret class="intro-caret">|</span>
+    </div>
+
+    <!-- Final navbar brand -->
+    <div data-intro-mark class="intro-mark">
+      EJ<span>.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const overlay = document.querySelector<HTMLElement>(
+    "[data-intro-overlay]"
+  );
+
+  if (overlay) {
+    // Skip the intro if it has already played in this tab.
+    if (
+      document.documentElement.dataset.introSeen === "true"
+    ) {
+      overlay.remove();
+    } else {
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      );
+
+      if (reducedMotion.matches) {
+        overlay.remove();
+      } else {
+        try {
+          sessionStorage.setItem("edwin-intro-v1", "seen");
+        } catch {
+          // Continue without session persistence if unavailable.
+        }
+
+        const name = "Edwin Liona Jaya";
+        const textNode = overlay.querySelector<HTMLElement>(
+          "[data-intro-text]"
+        );
+        const canvas = overlay.querySelector<HTMLCanvasElement>(
+          "[data-intro-canvas]"
+        );
+        const frame = overlay.querySelector<HTMLElement>(
+          "[data-intro-frame]"
+        );
+        const mark = overlay.querySelector<HTMLElement>(
+          "[data-intro-mark]"
+        );
+
+        const previousOverflow = document.body.style.overflow;
+        const previousPadding = document.body.style.paddingRight;
+
+        // Prevent scroll without causing a scrollbar layout shift.
+        const scrollbarWidth =
+          window.innerWidth - document.documentElement.clientWidth;
+
+        document.body.style.overflow = "hidden";
+
+        if (scrollbarWidth > 0) {
+          document.body.style.paddingRight = `${scrollbarWidth}px`;
+        }
+
+        let context: CanvasRenderingContext2D | null =
+          canvas?.getContext("2d", { alpha: false }) ?? null;
+
+        let canvasWidth = 0;
+        let canvasHeight = 0;
+        let pixelRatio = 1;
+        let lastCodeDraw = 0;
+        let lastPhase = "";
+        let frameId = 0;
+        let finished = false;
+
+        const codeSnippets = [
+          "const model = await predict();",
+          "vector.search(query, 5)",
+          "if (score >= threshold)",
+          "return response;",
+          "query -> retrieve -> rank",
+          "loss.backward()",
+          "SELECT * FROM data;",
+          "pipeline.execute()",
+          "model.fit(dataset)",
+          "import tensorflow as tf;",
+          "const embedding = vectorize(text);",
+          "await agent.run(task)",
+          "data.transform()",
+          "response = await generate();",
+          "model.eval()",
+          "async function build()",
+        ];
+
+        const codeColors = [
+          "#e5e5e5",
+          "#f87171",
+          "#a3a3a3",
+          "#fca5a5",
+          "#d4d4d8",
+        ];
+
+        function cleanup() {
+          if (finished) return;
+          finished = true;
+
+          if (frameId) {
+            cancelAnimationFrame(frameId);
+          }
+
+          window.removeEventListener("resize", resizeCanvas);
+          document.body.style.overflow = previousOverflow;
+          document.body.style.paddingRight = previousPadding;
+
+          overlay?.remove();
+        }
+
+        function resizeCanvas() {
+          if (!canvas || !frame || !context) return;
+
+          const rect = frame.getBoundingClientRect();
+          pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+          const width = Math.max(1, Math.round(rect.width * pixelRatio));
+          const height = Math.max(1, Math.round(rect.height * pixelRatio));
+
+          if (width !== canvas.width || height !== canvas.height) {
+            canvas.width = width;
+            canvas.height = height;
+            canvasWidth = rect.width;
+            canvasHeight = rect.height;
+          }
+
+          context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        }
+
+        function drawCode() {
+          if (!canvas || !context) return;
+
+          if (canvas.width === 0 || canvas.height === 0) {
+            resizeCanvas();
+          }
+
+          if (canvasWidth <= 0 || canvasHeight <= 0) return;
+
+          const ctx = context;
+
+          ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          ctx.fillStyle = "#171717";
+          ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+          ctx.font =
+            "11px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+          ctx.textBaseline = "middle";
+
+          const lineHeight = 19;
+          const rows = Math.ceil(canvasHeight / lineHeight);
+
+          for (let i = 0; i < rows; i++) {
+            const snippet =
+              codeSnippets[
+                Math.floor(Math.random() * codeSnippets.length)
+              ];
+
+            const x = 12 + Math.random() * Math.min(210, canvasWidth * 0.32);
+            const y = 12 + i * lineHeight;
+
+            ctx.globalAlpha = 0.25 + Math.random() * 0.65;
+            ctx.fillStyle =
+              codeColors[Math.floor(Math.random() * codeColors.length)];
+
+            ctx.fillText(snippet, x, y);
+          }
+
+          ctx.globalAlpha = 1;
+        }
+
+        function fadeOut() {
+          overlay.classList.add("is-exiting");
+          window.setTimeout(cleanup, 320);
+        }
+
+        function morphToNavbar() {
+          if (!mark) {
+            fadeOut();
+            return;
+          }
+
+          const navbarLogo = document.querySelector<HTMLElement>(
+            "[data-brand-logo]"
+          );
+
+          if (!navbarLogo || typeof mark.animate !== "function") {
+            fadeOut();
+            return;
+          }
+
+          const startRect = mark.getBoundingClientRect();
+          const targetRect = navbarLogo.getBoundingClientRect();
+
+          const startX = startRect.left + startRect.width / 2;
+          const startY = startRect.top + startRect.height / 2;
+          const targetX = targetRect.left + targetRect.width / 2;
+          const targetY = targetRect.top + targetRect.height / 2;
+
+          const dx = targetX - startX;
+          const dy = targetY - startY;
+
+          const scale = Math.min(
+            1,
+            targetRect.width / Math.max(1, startRect.width),
+            targetRect.height / Math.max(1, startRect.height)
+          );
+
+          try {
+            const animation = mark.animate(
+              [
+                {
+                  transform: "translate(-50%, -50%) scale(1)",
+                  opacity: 1,
+                },
+                {
+                  transform:
+                    `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${scale})`,
+                  opacity: 1,
+                },
+              ],
+              {
+                duration: 520,
+                easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                fill: "forwards",
+              }
+            );
+
+            animation.onfinish = fadeOut;
+          } catch {
+            fadeOut();
+          }
+        }
+
+        const TYPE_END = 700;
+        const FRAME_END = 960;
+        const CODE_END = 1640;
+        const MARK_END = 1980;
+
+        let started = 0;
+
+        function animate(now: number) {
+          const elapsed = now - started;
+
+          let phase: string;
+
+          if (elapsed < TYPE_END) {
+            phase = "typing";
+          } else if (elapsed < FRAME_END) {
+            phase = "frame";
+          } else if (elapsed < CODE_END) {
+            phase = "code";
+          } else if (elapsed < MARK_END) {
+            phase = "mark";
+          } else {
+            phase = "morph";
+          }
+
+          if (phase !== lastPhase) {
+            overlay.dataset.phase = phase;
+            lastPhase = phase;
+
+            if (phase === "code") {
+              resizeCanvas();
+            }
+          }
+
+          if (phase === "typing" && textNode) {
+            const count = Math.min(
+              name.length,
+              Math.floor(elapsed / 42) + 1
+            );
+
+            const nextText = name.slice(0, count);
+            if (textNode.textContent !== nextText) {
+              textNode.textContent = nextText;
+            }
+          } else if (textNode && phase !== "morph") {
+            textNode.textContent = name;
+          }
+
+          if (phase === "code" && now - lastCodeDraw >= 55) {
+            drawCode();
+            lastCodeDraw = now;
+          }
+
+          if (phase === "morph") {
+            morphToNavbar();
+            return;
+          }
+
+          frameId = requestAnimationFrame(animate);
+        }
+
+        window.addEventListener("resize", resizeCanvas, {
+          passive: true,
+        });
+
+        frameId = requestAnimationFrame((now) => {
+          started = now;
+          animate(now);
+        });
+      }
+    }
+  }
+</script>
+
+<style>
+  [data-intro-overlay] {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: #ffffff;
+    color: #171717;
+    opacity: 1;
+    pointer-events: auto;
+    transition: opacity 280ms ease;
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+
+  [data-intro-overlay].is-exiting {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .intro-stage {
+    position: relative;
+    display: grid;
+    width: min(86vw, 760px);
+    height: clamp(120px, 23vw, 210px);
+    place-items: center;
+  }
+
+  .intro-frame {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border: 1px solid rgb(23 23 23 / 0.18);
+    border-radius: 5px;
+    background: transparent;
+    opacity: 0;
+    transform: scale(0.94);
+    transition:
+      opacity 280ms ease,
+      transform 380ms cubic-bezier(0.22, 1, 0.36, 1),
+      background-color 220ms ease;
+  }
+
+  .intro-frame canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  [data-phase="frame"] .intro-frame,
+  [data-phase="code"] .intro-frame {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  [data-phase="code"] .intro-frame {
+    border-color: rgb(255 255 255 / 0.35);
+    background: #171717;
+  }
+
+  [data-phase="code"] .intro-frame canvas {
+    opacity: 0.9;
+  }
+
+  .intro-name {
+    position: relative;
+    z-index: 2;
+    max-width: 100%;
+    color: #171717;
+    font-size: clamp(1.3rem, 5.4vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.075em;
+    line-height: 1.1;
+    white-space: nowrap;
+    transition:
+      color 200ms ease,
+      opacity 240ms ease;
+  }
+
+  [data-phase="code"] .intro-name {
+    color: #ffffff;
+    text-shadow: 0 1px 14px rgb(0 0 0 / 60%);
+  }
+
+  [data-phase="code"] .intro-caret {
+    opacity: 0;
+  }
+
+  [data-phase="mark"] .intro-name,
+  [data-phase="morph"] .intro-name {
+    opacity: 0;
+  }
+
+  .intro-caret {
+    display: inline-block;
+    padding-left: 2px;
+    color: #e53935;
+    animation: intro-blink 650ms steps(2, start) infinite;
+  }
+
+  .intro-mark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    color: #171717;
+    font-size: clamp(3rem, 7vw, 4rem);
+    font-weight: 800;
+    letter-spacing: -0.1em;
+    line-height: 1;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0.75);
+    will-change: transform, opacity;
+    transition:
+      opacity 250ms ease,
+      transform 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .intro-mark span {
+    color: #e53935;
+  }
+
+  [data-phase="mark"] .intro-mark {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  [data-phase="morph"] .intro-mark {
+    transition: none;
+  }
+
+  [data-phase="mark"] .intro-frame,
+  [data-phase="morph"] .intro-frame {
+    opacity: 0;
+  }
+
+  @keyframes intro-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-intro-overlay],
+    .intro-frame,
+    .intro-name,
+    .intro-mark,
+    .intro-frame canvas {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>

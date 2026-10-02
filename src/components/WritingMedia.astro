@@ -1,0 +1,869 @@
+---
+import Parser from "rss-parser";
+import PreviewThumbnail from "./PreviewThumbnail.astro";
+
+// --------------------------------------------------
+// Types
+// --------------------------------------------------
+
+interface Article {
+  title: string;
+  description: string;
+  date: string;
+  href: string;
+  image?: string;
+}
+
+interface MediumFeedItem {
+  link?: string;
+  title?: string;
+  content?: string;
+  contentSnippet?: string;
+  summary?: string;
+  isoDate?: string;
+  pubDate?: string;
+  enclosure?: { url?: string };
+  "content:encoded"?: string;
+}
+
+interface SocialPostInput {
+  platform: "TikTok" | "Instagram";
+  url: string;
+  title?: string;
+  description?: string;
+}
+
+interface SocialPost extends SocialPostInput {
+  href: string;
+}
+
+interface SocialProfileInput {
+  name: "TikTok" | "Instagram";
+  description: string;
+  href?: string;
+  icon: string;
+}
+
+interface SocialProfile extends SocialProfileInput {
+  href: string;
+}
+
+interface MediaInput {
+  href: string;
+  publication: string;
+  headline: string;
+  date?: string;
+  image?: string;
+}
+
+type MediaItem =
+  | {
+      kind: "instagram";
+      href: string;
+      publication: string;
+      headline: string;
+      date: string;
+    }
+  | {
+      kind: "article";
+      href: string;
+      publication: string;
+      headline: string;
+      date: string;
+      image?: string;
+    };
+
+// --------------------------------------------------
+// Configuration
+// --------------------------------------------------
+
+const REQUEST_TIMEOUT_MS = 4000;
+const MAX_ARTICLES = 3;
+
+// --------------------------------------------------
+// Utilities
+// --------------------------------------------------
+
+function safeUrl(value?: string): string | null {
+  if (!value?.trim()) return null;
+
+  try {
+    const url = new URL(value.trim());
+
+    if (url.protocol !== "https:" || url.username || url.password) {
+      return null;
+    }
+
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
+function safeImageUrl(value?: string, base?: string): string | undefined {
+  if (!value?.trim()) return undefined;
+
+  try {
+    const normalized = value.trim().replace(/&amp;/gi, "&");
+    const url = base ? new URL(normalized, base) : new URL(normalized);
+    return safeUrl(url.href) ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function cleanText(value?: string): string {
+  return (value ?? "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function formatDate(value?: string): string {
+  if (!value) return "";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
+function extractFirstImage(html?: string, base?: string): string | undefined {
+  if (!html || !base) return undefined;
+
+  const tags = html.match(/<img\b[^>]*>/gi) ?? [];
+
+  for (const tag of tags) {
+    const match = tag.match(
+      /\b(?:src|data-src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i,
+    );
+
+    const image = safeImageUrl(
+      match?.[1] ?? match?.[2] ?? match?.[3],
+      base,
+    );
+
+    if (image) return image;
+  }
+
+  return undefined;
+}
+
+function getTikTokVideoId(href: string): string | undefined {
+  try {
+    const url = new URL(href);
+    const hostname = url.hostname.toLowerCase();
+
+    if (hostname !== "tiktok.com" && !hostname.endsWith(".tiktok.com")) {
+      return undefined;
+    }
+
+    return url.pathname.match(/\/video\/(\d+)/)?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
+function isInstagramPost(href: string): boolean {
+  try {
+    const url = new URL(href);
+    const hostname = url.hostname.toLowerCase();
+    const segments = url.pathname.split("/").filter(Boolean);
+    const validHost =
+      hostname === "instagram.com" || hostname.endsWith(".instagram.com");
+
+    return (
+      validHost &&
+      ["p", "reel", "tv"].includes(segments[0] ?? "") &&
+      Boolean(segments[1])
+    );
+  } catch {
+    return false;
+  }
+}
+
+// --------------------------------------------------
+// Medium RSS
+// --------------------------------------------------
+
+const mediumUsername = import.meta.env.MEDIUM_USERNAME?.trim().replace(/^@/, "");
+const configuredMediumFeed = safeUrl(import.meta.env.MEDIUM_FEED_URL);
+
+const mediumFeedUrl =
+  configuredMediumFeed ??
+  (mediumUsername
+    ? `https://medium.com/feed/@${encodeURIComponent(mediumUsername)}`
+    : "");
+
+const mediumProfileUrl =
+  safeUrl(import.meta.env.PUBLIC_MEDIUM_URL) ??
+  (mediumUsername
+    ? `https://medium.com/@${encodeURIComponent(mediumUsername)}`
+    : null);
+
+let articles: Article[] = [];
+
+if (mediumFeedUrl) {
+  try {
+    const response = await fetch(mediumFeedUrl, {
+      headers: {
+        Accept: "application/rss+xml, application/xml, text/xml",
+      },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      throw new Error(`RSS returned HTTP ${response.status}`);
+    }
+
+    const parser = new Parser();
+    const feed = await parser.parseString(await response.text());
+    const parsedArticles: Article[] = [];
+
+    for (const item of feed.items) {
+      const raw = item as typeof item & MediumFeedItem;
+      const href = safeUrl(raw.link);
+
+      if (!href || !raw.title) continue;
+
+      const content = raw.content ?? raw["content:encoded"] ?? "";
+      const description = cleanText(
+        raw.contentSnippet ?? raw.summary ?? content,
+      );
+
+      const image =
+        safeImageUrl(raw.enclosure?.url, href) ??
+        extractFirstImage(content, href);
+
+      parsedArticles.push({
+        title: cleanText(raw.title),
+        description:
+          description.length > 180
+            ? `${description.slice(0, 177).trimEnd()}...`
+            : description || "Read the full article on Medium.",
+        date: formatDate(raw.isoDate ?? raw.pubDate),
+        href,
+        image,
+      });
+
+      if (parsedArticles.length >= MAX_ARTICLES) break;
+    }
+
+    articles = parsedArticles;
+  } catch (error) {
+    console.warn(
+      "[WritingMedia] Medium RSS unavailable:",
+      error instanceof Error ? error.message : "Unknown error",
+    );
+  }
+}
+
+// --------------------------------------------------
+// Social content
+// --------------------------------------------------
+
+const socialPostInputs: SocialPostInput[] = [
+  {
+    platform: "Instagram",
+    url: "https://www.instagram.com/p/DXVxOcHTYon/",
+    title: "Explaining RAG",
+  },
+  {
+    platform: "TikTok",
+    url: "https://www.tiktok.com/@edwinjaya.py/video/7625088576409144594",
+    title: "Explaining Sigmoid",
+  },
+    {
+    platform: "Instagram",
+    url: "https://www.instagram.com/p/DXD1ocnk0gR/",
+    title: "Explaining LM Studio",
+  },
+];
+
+const socialPosts: SocialPost[] = socialPostInputs.flatMap((post) => {
+  const href = safeUrl(post.url);
+  return href ? [{ ...post, href }] : [];
+});
+
+const socialProfileInputs: SocialProfileInput[] = [
+  {
+    name: "TikTok",
+    description: "Short-form content about AI and technology.",
+    href: import.meta.env.PUBLIC_TIKTOK_URL,
+    icon: "T",
+  },
+  {
+    name: "Instagram",
+    description: "Technology, creativity, and everyday experiences.",
+    href: import.meta.env.PUBLIC_INSTAGRAM_URL,
+    icon: "I",
+  },
+];
+
+const socialProfiles: SocialProfile[] = socialProfileInputs.flatMap((profile) => {
+  const href = safeUrl(profile.href);
+  return href ? [{ ...profile, href }] : [];
+});
+
+// --------------------------------------------------
+// Curated media coverage
+// Metadata is curated to avoid slow or blocked remote requests.
+// --------------------------------------------------
+
+const mediaInputs: MediaInput[] = [
+  {
+    href: "https://unikom.ac.id/id/berita/tim-socialabs-unikom-berhasil-menjadi-finalis-apicta-2024",
+    publication: "Universitas Komputer Indonesia",
+    headline: "Tim Socialabs UNIKOM Berhasil Menjadi Finalis APICTA 2024",
+  },
+  {
+    href: "https://www.instagram.com/p/DD8Wrd7SA05/",
+    publication: "Instagram",
+    headline: "APICTA Awards - UNIKOM",
+  },
+  {
+    href: "https://www.instagram.com/p/DD3dV7BphRU/?img_index=2",
+    publication: "Instagram",
+    headline: "APICTA Awards - Codelabs",
+  },
+  {
+    href: "https://blog.google/intl/id-id/company-news/outreach-initiatives/ayo-semangati-14-developer-muda-indonesia-menuju-final-solution-challenge/",
+    publication: "Google",
+    headline: "Ayo Semangati 14 Developer Muda Indonesia Menuju Final Solution Challenge",
+  },
+  {
+    href: "https://news.ums.ac.id/id/medcom-id/14-developer-muda-indonesia-menuju-final-solution-challenge/",
+    publication: "Universitas Muhammadiyah Surakarta",
+    headline: "14 Developer Muda Indonesia Menuju Final Solution Challenge",
+  },
+  {
+    href: "https://infokomputer.grid.id/read/124075504/14-developer-indonesia-masuk-semifinal-google-solution-challenge",
+    publication: "InfoKomputer",
+    headline: "14 Developer Indonesia Masuk Semifinal Google Solution Challenge",
+  },
+  {
+    href: "https://prestasi.unikom.ac.id/view/575",
+    publication: "UNIKOM",
+    headline: "Lolos Pendanaan PKM-KI",
+  },
+  {
+    href: "https://prestasi.unikom.ac.id/view/623",
+    publication: "UNIKOM",
+    headline: "Finalis APICTA Research and Development (CC-RD)",
+  },
+  {
+    href: "https://prestasi.unikom.ac.id/view/622",
+    publication: "UNIKOM",
+    headline: "Finalis APICTA Business Services (HC-BS)",
+  },
+  {
+    href: "https://prestasi.unikom.ac.id/view/576",
+    publication: "UNIKOM",
+    headline: "Global Top 100 Google Solution Challenge 2024",
+  }
+];
+
+const mediaItems: MediaItem[] = mediaInputs.flatMap((item) => {
+  const href = safeUrl(item.href);
+  if (!href) return [];
+
+  if (isInstagramPost(href)) {
+    return [
+      {
+        kind: "instagram" as const,
+        href,
+        publication: item.publication,
+        headline: item.headline,
+        date: item.date ? formatDate(item.date) : "",
+      },
+    ];
+  }
+
+  return [
+    {
+      kind: "article" as const,
+      href,
+      publication: item.publication,
+      headline: item.headline,
+      date: item.date ? formatDate(item.date) : "",
+      image: safeImageUrl(item.image, href),
+    },
+  ];
+});
+---
+
+<section
+  id="writing"
+  data-writing-media
+  aria-labelledby="writing-title"
+  class="relative isolate scroll-mt-24 overflow-hidden bg-background px-5 py-20 sm:px-8 sm:py-28 lg:px-12 lg:py-32"
+>
+  <!-- Editorial background accents -->
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute -right-32 -top-24 -z-10 h-80 w-80 rounded-full bg-accent/[0.07] blur-3xl sm:h-[26rem] sm:w-[26rem]"
+  ></div>
+  <div
+    aria-hidden="true"
+    class="pointer-events-none absolute -bottom-40 -left-32 -z-10 h-72 w-72 rounded-full bg-foreground/[0.035] blur-3xl"
+  ></div>
+
+  <div class="mx-auto max-w-7xl">
+    <!-- Section heading -->
+    <div class="grid gap-6 md:grid-cols-[1fr_0.62fr] md:items-end">
+      <div>
+        <p class="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.24em] text-accent sm:text-xs">
+          <span aria-hidden="true" class="h-px w-8 bg-accent"></span>
+          Journal <span class="text-muted">/ 04</span>
+        </p>
+
+        <h2
+          id="writing-title"
+          class="mt-5 text-4xl font-bold leading-[0.96] tracking-[-0.065em] text-foreground sm:text-5xl lg:text-7xl"
+        >
+          Beyond <span class="font-medium italic text-muted">the code.</span>
+        </h2>
+      </div>
+
+      <p class="max-w-md text-sm leading-7 text-muted sm:text-base">
+        Notes, experiments, and moments from a life spent learning and building with technology.
+      </p>
+    </div>
+
+    <!-- Medium writing -->
+    <div class="mt-14 sm:mt-16">
+      <div class="mb-6 flex items-end justify-between gap-4 border-b border-foreground/10 pb-4">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">01 / Writing</p>
+          <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+            Ideas worth sharing<span class="text-accent">.</span>
+          </h3>
+        </div>
+
+        {mediumProfileUrl && (
+          <a
+            href={mediumProfileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View all articles on Medium"
+            class="group inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:text-sm"
+          >
+            All writing
+            <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">↗</span>
+          </a>
+        )}
+      </div>
+
+      {articles.length > 0 ? (
+        <div class="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+          {articles.map((article, index) => (
+            <article class="group flex h-full w-full max-w-[360px] flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.015] transition-[transform,border-color,box-shadow] duration-300 motion-safe:hover:-translate-y-1 hover:border-accent/35 hover:shadow-xl hover:shadow-foreground/[0.04]">
+              <a
+                href={article.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Read article: ${article.title}`}
+                class="group/preview relative block aspect-[16/9] overflow-hidden border-b border-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent"
+              >
+                <PreviewThumbnail
+                  src={article.image}
+                  alt=""
+                  title={article.title}
+                  label="MEDIUM / ESSAY"
+                  fit="cover"
+                />
+                <span
+                  aria-hidden="true"
+                  class="absolute bottom-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/55 text-xs text-white opacity-100 backdrop-blur-sm transition-all duration-300 sm:translate-y-1 sm:opacity-0 sm:group-hover/preview:translate-y-0 sm:group-hover/preview:opacity-100"
+                >↗</span>
+              </a>
+
+              <div class="flex flex-1 flex-col p-4 sm:p-5">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+                    Note {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {article.date && (
+                    <time class="text-[10px] text-muted">{article.date}</time>
+                  )}
+                </div>
+
+                <h4 class="mt-4 text-base font-semibold leading-snug tracking-tight text-foreground sm:text-lg">
+                  {article.title}
+                </h4>
+                <p class="mt-2 flex-1 text-xs leading-6 text-muted sm:text-sm">
+                  {article.description}
+                </p>
+
+                <a
+                  href={article.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-5 inline-flex w-fit items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:text-sm"
+                >
+                  Read <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div class="rounded-2xl border border-dashed border-foreground/15 bg-foreground/[0.02] p-6 sm:p-8">
+          <p class="text-sm leading-relaxed text-muted">
+            {mediumFeedUrl
+              ? "No articles are available right now. The feed will be checked again on the next build."
+              : "Connect your Medium RSS feed to automatically display your latest articles."}
+          </p>
+        </div>
+      )}
+    </div>
+
+    <!-- Content creation -->
+    {(socialProfiles.length > 0 || socialPosts.length > 0) && (
+      <div class="mt-16 sm:mt-20">
+        <div class="mb-6 flex items-end justify-between gap-4 border-b border-foreground/10 pb-4">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">02 / Content creation</p>
+            <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              Creating &amp; sharing<span class="text-accent">.</span>
+            </h3>
+          </div>
+          <span class="hidden text-[10px] uppercase tracking-[0.18em] text-muted sm:inline">In the feed</span>
+        </div>
+
+        {socialProfiles.length > 0 && (
+          <div class="mb-6 grid grid-cols-1 justify-items-center gap-3 sm:grid-cols-2">
+            {socialProfiles.map((profile) => (
+              <a
+                href={profile.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Visit Edwin's ${profile.name} profile`}
+                class="group flex w-full max-w-[440px] items-center justify-between gap-4 rounded-xl border border-foreground/10 bg-foreground/[0.015] p-4 transition-all hover:border-accent/35 hover:bg-foreground/[0.035] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background transition-colors group-hover:bg-accent">
+                    {profile.icon}
+                  </span>
+                  <div class="min-w-0">
+                    <h4 class="text-sm font-semibold text-foreground">{profile.name}</h4>
+                    <p class="mt-1 truncate text-xs text-muted">{profile.description}</p>
+                  </div>
+                </div>
+                <span
+                  class="shrink-0 text-sm text-foreground transition-transform group-hover:translate-x-1 group-hover:text-accent"
+                  aria-hidden="true"
+                >↗</span>
+              </a>
+            ))}
+          </div>
+        )}
+
+        {socialPosts.length > 0 && (
+          <div class="grid grid-cols-1 items-start justify-items-center gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+            {socialPosts.map((post) => (
+              <article class="group flex h-full w-full max-w-[320px] min-w-0 flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.015] transition-[transform,border-color,box-shadow] duration-300 motion-safe:hover:-translate-y-1 hover:border-accent/35 hover:shadow-xl hover:shadow-foreground/[0.04]">
+                {post.platform === "Instagram" && isInstagramPost(post.href) ? (
+                  <div
+                    data-instagram-shell
+                    data-instagram-url={post.href}
+                    class="relative flex min-h-[190px] w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#f7f5f1] p-3"
+                  >
+                    <div data-instagram-placeholder class="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-7 text-center">
+                      <span class="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-sm font-semibold text-[#262626]">IG</span>
+                      <p class="text-xs font-medium text-[#262626]">Instagram post</p>
+                      <p class="text-[10px] text-[#737373]">Preview loads as you scroll</p>
+                      <button
+                        type="button"
+                        data-load-instagram
+                        class="rounded-full bg-[#171717] px-4 py-2 text-[10px] font-semibold text-white transition-colors hover:bg-[#444] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717]"
+                      >
+                        Load preview
+                      </button>
+                      <a href={post.href} target="_blank" rel="noopener noreferrer" class="text-[10px] font-medium text-[#737373] underline underline-offset-4 hover:text-[#171717]">
+                        Open original ↗
+                      </a>
+                    </div>
+                  </div>
+                ) : post.platform === "TikTok" && getTikTokVideoId(post.href) ? (
+                  <div class="mx-auto aspect-[9/16] w-full max-w-[220px] overflow-hidden rounded-t-2xl bg-[#111116]">
+                    <iframe
+                      src={`https://www.tiktok.com/player/v1/${getTikTokVideoId(post.href)}?controls=1&description=1`}
+                      title={`TikTok video: ${post.title ?? "Featured video"}`}
+                      loading="lazy"
+                      allow="fullscreen; encrypted-media; picture-in-picture"
+                      allowfullscreen
+                      referrerpolicy="strict-origin-when-cross-origin"
+                      class="h-full w-full border-0"
+                    ></iframe>
+                  </div>
+                ) : (
+                  <div class="flex min-h-36 items-center justify-center rounded-t-2xl bg-foreground/[0.025] p-5 text-center">
+                    <a href={post.href} target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-foreground transition-colors hover:text-accent">
+                      View original {post.platform} post ↗
+                    </a>
+                  </div>
+                )}
+
+                <div class="flex flex-1 flex-col p-4">
+                  <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">{post.platform}</p>
+                  <h4 class="mt-2 text-sm font-semibold leading-snug text-foreground">
+                    {post.title ?? `Featured ${post.platform} post`}
+                  </h4>
+                  {post.description && (
+                    <p class="mt-2 flex-1 text-xs leading-5 text-muted">{post.description}</p>
+                  )}
+                  <a
+                    href={post.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="mt-4 inline-flex w-fit items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                  >
+                    View original <span aria-hidden="true">↗</span>
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
+
+    <!-- Press and recognition -->
+    {mediaItems.length > 0 && (
+      <div class="mt-16 border-t border-foreground/10 pt-10 sm:mt-20 sm:pt-12">
+        <div class="mb-6 flex items-end justify-between gap-4">
+          <div>
+            <p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">03 / Press &amp; recognition</p>
+            <h3 class="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              A few milestones<span class="text-accent">.</span>
+            </h3>
+            <p class="mt-2 max-w-lg text-xs leading-6 text-muted sm:text-sm">
+              Selected publications and records covering projects, competitions, and achievements.
+            </p>
+          </div>
+          <span class="hidden text-[10px] uppercase tracking-[0.18em] text-muted sm:inline">On record</span>
+        </div>
+
+        <div class="grid grid-cols-1 items-start justify-items-center gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+          {mediaItems.map((item) => (
+            <article class="group flex h-full w-full max-w-[340px] min-w-0 flex-col overflow-hidden rounded-2xl border border-foreground/10 bg-foreground/[0.015] transition-[transform,border-color,box-shadow] duration-300 motion-safe:hover:-translate-y-1 hover:border-accent/35 hover:shadow-xl hover:shadow-foreground/[0.04]">
+              {item.kind === "instagram" ? (
+                <div
+                  data-instagram-shell
+                  data-instagram-url={item.href}
+                  class="relative flex min-h-[190px] w-full items-center justify-center overflow-hidden rounded-t-2xl bg-[#f7f5f1] p-3"
+                >
+                  <div data-instagram-placeholder class="flex w-full flex-col items-center justify-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-7 text-center">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 text-sm font-semibold text-[#262626]">IG</span>
+                    <p class="text-xs font-medium text-[#262626]">Instagram coverage</p>
+                    <p class="text-[10px] text-[#737373]">Preview loads as you scroll</p>
+                    <button
+                      type="button"
+                      data-load-instagram
+                      class="rounded-full bg-[#171717] px-4 py-2 text-[10px] font-semibold text-white transition-colors hover:bg-[#444] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#171717]"
+                    >
+                      Load preview
+                    </button>
+                    <a href={item.href} target="_blank" rel="noopener noreferrer" class="text-[10px] font-medium text-[#737373] underline underline-offset-4 hover:text-[#171717]">
+                      Open original ↗
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Read coverage: ${item.headline}`}
+                  class="group/preview relative block aspect-[16/9] overflow-hidden rounded-t-2xl border-b border-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent"
+                >
+                  <PreviewThumbnail
+                    src={item.image}
+                    alt=""
+                    title={item.headline}
+                    label={item.publication}
+                    fit="contain"
+                  />
+                  <span aria-hidden="true" class="absolute bottom-3 right-3 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/55 text-xs text-white opacity-100 backdrop-blur-sm transition-all duration-300 sm:translate-y-1 sm:opacity-0 sm:group-hover/preview:translate-y-0 sm:group-hover/preview:opacity-100">↗</span>
+                </a>
+              )}
+
+              <div class="flex flex-1 flex-col p-4">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-accent">{item.publication}</span>
+                  {item.date && <time class="shrink-0 text-[10px] text-muted">{item.date}</time>}
+                </div>
+                <h4 class="mt-3 line-clamp-3 text-sm font-semibold leading-snug text-foreground">{item.headline}</h4>
+                <a
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="mt-4 inline-flex w-fit items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                >
+                  {item.kind === "instagram" ? "View coverage" : "Read coverage"}
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Closing CTA -->
+    <div class="mt-14 flex flex-col justify-between gap-4 border-t border-foreground/10 pt-7 sm:flex-row sm:items-center">
+      <p class="max-w-lg text-xs leading-6 text-muted sm:text-sm">
+        Sharing knowledge is part of how I learn, grow, and contribute to the technology community.
+      </p>
+      <a
+        href="#contact"
+        class="group inline-flex shrink-0 items-center gap-2 text-xs font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:text-sm"
+      >
+        Let's connect
+        <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">↗</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Instagram's script is loaded only when an embed approaches the viewport. -->
+<script>
+  type InstagramWindow = Window & {
+    instgrm?: {
+      Embeds?: { process: () => void };
+    };
+  };
+
+  let instagramScriptPromise: Promise<boolean> | undefined;
+  let instagramObserver: IntersectionObserver | undefined;
+
+  function loadInstagramScript(): Promise<boolean> {
+    const instagramWindow = window as InstagramWindow;
+
+    if (instagramWindow.instgrm?.Embeds?.process) {
+      instagramWindow.instgrm.Embeds.process();
+      return Promise.resolve(true);
+    }
+
+    if (instagramScriptPromise) return instagramScriptPromise;
+
+    instagramScriptPromise = new Promise<boolean>((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://www.instagram.com/embed.js";
+      script.async = true;
+      script.dataset.instagramEmbed = "true";
+      script.onload = () => {
+        const embeds = (window as InstagramWindow).instgrm?.Embeds;
+        embeds?.process();
+        resolve(Boolean(embeds?.process));
+      };
+      script.onerror = () => {
+        script.remove();
+        instagramScriptPromise = undefined;
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    });
+
+    return instagramScriptPromise;
+  }
+
+  async function activateInstagramEmbed(root: HTMLElement) {
+    if (root.dataset.embedStarted === "true") return;
+
+    const href = root.dataset.instagramUrl;
+    if (!href) return;
+
+    root.dataset.embedStarted = "true";
+
+    const placeholder = root.querySelector<HTMLElement>(
+      "[data-instagram-placeholder]",
+    );
+
+    const blockquote = document.createElement("blockquote");
+    blockquote.className = "instagram-media";
+    blockquote.setAttribute("data-instgrm-permalink", href);
+    blockquote.setAttribute("data-instgrm-version", "14");
+    blockquote.style.cssText =
+      "background:#fff;border:0;border-radius:12px;box-shadow:none;margin:0 auto;max-width:320px;min-width:280px;padding:0;width:100%;";
+
+    const fallbackLink = document.createElement("a");
+    fallbackLink.href = href;
+    fallbackLink.target = "_blank";
+    fallbackLink.rel = "noopener noreferrer";
+    fallbackLink.textContent = "View this post on Instagram";
+    blockquote.appendChild(fallbackLink);
+
+    placeholder?.setAttribute("hidden", "");
+    root.appendChild(blockquote);
+
+    const loaded = await loadInstagramScript();
+
+    if (!loaded) {
+      blockquote.remove();
+      placeholder?.removeAttribute("hidden");
+      root.dataset.embedStarted = "false";
+    }
+  }
+
+  function initializeInstagramEmbeds() {
+    instagramObserver?.disconnect();
+
+    const shells = document.querySelectorAll<HTMLElement>(
+      "[data-instagram-shell]",
+    );
+
+    if (!shells.length) return;
+
+    const hasIntersectionObserver = "IntersectionObserver" in window;
+
+    if (hasIntersectionObserver) {
+      instagramObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            const shell = entry.target as HTMLElement;
+            instagramObserver?.unobserve(shell);
+            void activateInstagramEmbed(shell);
+          }
+        },
+        { rootMargin: "300px 0px" },
+      );
+    }
+
+    shells.forEach((shell) => {
+      if (shell.dataset.embedStarted === "true") return;
+
+      const button = shell.querySelector<HTMLButtonElement>(
+        "[data-load-instagram]",
+      );
+
+      if (button && button.dataset.listenerAttached !== "true") {
+        button.dataset.listenerAttached = "true";
+        button.addEventListener("click", () => {
+          instagramObserver?.unobserve(shell);
+          void activateInstagramEmbed(shell);
+        });
+      }
+
+      // Browsers without IntersectionObserver retain the manual-load button.
+      instagramObserver?.observe(shell);
+    });
+  }
+
+  initializeInstagramEmbeds();
+  document.addEventListener("astro:page-load", initializeInstagramEmbeds);
+</script>

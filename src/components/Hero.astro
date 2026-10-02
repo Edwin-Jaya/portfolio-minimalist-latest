@@ -1,0 +1,219 @@
+
+<section
+  id="home"
+  aria-labelledby="hero-title"
+  class="relative isolate overflow-hidden bg-background"
+>
+  <div class="mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl grid-cols-1 items-start gap-8 px-5 pt-4 pb-12 sm:px-8 sm:pt-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-10 lg:px-12 lg:py-6">
+
+    <!-- Portrait: first on mobile, right on desktop -->
+    <div
+      data-code-portrait
+      class="group relative order-1 mx-auto aspect-[4/4.5] w-full max-w-[25rem] overflow-hidden rounded-[1.8rem] bg-[#171717] lg:order-2 lg:max-w-none"
+    >
+      <img
+        src="/images/edwin-jaya.jpg"
+        alt="Edwin Jaya, AI and software engineer"
+        width="720"
+        height="1280"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        class="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+      />
+
+      <!-- Mouse-following code trail -->
+      <div
+        data-code-trail
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 z-10 overflow-hidden"
+      ></div>
+
+      <!-- Subtle hover overlay -->
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 z-0 bg-accent/0 transition-colors duration-300 group-hover:bg-accent/10"
+      ></div>
+
+      <!-- Image caption -->
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent p-5 pt-16 text-white">
+        <span class="text-sm font-medium tracking-wide">Edwin Jaya</span>
+        <span class="text-xs text-white/70">AI × Software Engineering</span>
+      </div>
+    </div>
+
+    <!-- Text: second on mobile, left on desktop -->
+    <div class="relative z-10 order-2 lg:order-1">
+      <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted sm:text-sm">
+        <span class="h-2 w-2 rounded-full bg-accent"></span>
+        AI & Software Engineer
+      </p>
+
+      <h1
+        id="hero-title"
+        class="mt-6 text-[clamp(3.5rem,8.5vw,7.8rem)] font-bold leading-[0.88] tracking-[-0.075em] text-foreground"
+      >
+        <span class="sr-only">Edwin Jaya — AI Engineer & Software Developer. </span>Building<br />
+        <span class="text-accent">intelligent</span><br />
+        systems<span class="text-accent">.</span>
+      </h1>
+
+      <p class="mt-7 max-w-lg text-base leading-relaxed text-muted sm:text-lg">
+        My work spans AI research and software engineering—from NLP,
+        computer vision, and RAG to full-stack applications. I'm interested
+        in turning complex ideas into practical digital solutions.
+      </p>
+
+      <div class="mt-8 flex flex-wrap items-center gap-3">
+        <a
+          href="#work"
+          class="group inline-flex items-center gap-3 rounded-full bg-foreground px-6 py-4 text-sm font-semibold text-background transition-all duration-300 hover:-translate-y-1 hover:bg-accent"
+        >
+          Explore my work
+          <span class="transition-transform duration-300 group-hover:translate-x-1">↗</span>
+        </a>
+
+        <a
+          href="#contact"
+          class="inline-flex items-center gap-2 rounded-full border border-foreground/15 px-6 py-4 text-sm font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+        >
+          Get in touch
+        </a>
+      </div>
+
+      <div class="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-foreground/10 pt-5">
+        <div>
+          <p class="text-xs uppercase tracking-wider text-muted">Recognition</p>
+          <p class="mt-1 text-sm font-semibold text-foreground">Global Top 100</p>
+          <p class="text-xs text-muted">Google Solution Challenge</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-muted">Competition</p>
+          <p class="mt-1 text-sm font-semibold text-foreground">APICTA Finalist</p>
+          <p class="text-xs text-muted">2024</p>
+        </div>
+        <div>
+          <p class="text-xs uppercase tracking-wider text-muted">
+            Government Funding
+          </p>
+          <p class="mt-1 text-sm font-semibold text-foreground">
+            PKM-KI Grant
+          </p>
+          <p class="text-xs text-muted">
+            Up to IDR 10 Million
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const portrait = document.querySelector<HTMLElement>(
+    "[data-code-portrait]"
+  );
+  const trail = portrait?.querySelector<HTMLElement>(
+    "[data-code-trail]"
+  );
+
+  const snippets = [
+    "const model = await predict();",
+    "embedding = vectorize(text)",
+    "if (score >= threshold)",
+    "return response;",
+    "query → retrieve → rank",
+    "loss.backward()",
+    "SELECT * FROM data;",
+    "pipeline.execute()",
+    "model.fit(dataset)",
+    "import tensorflow as tf;",
+    "vector.search(query)",
+    "async function build()",
+    "accuracy += 0.05;",
+    "data.transform()",
+    "await agent.run(task)",
+  ];
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+
+  let lastSpawn = 0;
+
+  portrait?.addEventListener("pointermove", (event: PointerEvent) => {
+    if (
+      !trail ||
+      prefersReducedMotion ||
+      (event.pointerType !== "mouse" && event.pointerType !== "pen")
+    ) {
+      return;
+    }
+
+    const now = performance.now();
+
+    // Limit particle creation for performance.
+    if (now - lastSpawn < 55) return;
+    lastSpawn = now;
+
+    const rect = portrait.getBoundingClientRect();
+    const particle = document.createElement("span");
+
+    const snippet =
+      snippets[Math.floor(Math.random() * snippets.length)];
+
+    particle.className = "code-particle";
+    particle.textContent = snippet;
+    particle.style.left = `${event.clientX - rect.left}px`;
+    particle.style.top = `${event.clientY - rect.top}px`;
+
+    trail.appendChild(particle);
+
+    const driftX = (Math.random() - 0.5) * 90;
+    const driftY = -30 - Math.random() * 70;
+
+    const animation = particle.animate(
+      [
+        {
+          opacity: 0,
+          transform: "translate(-50%, -50%) scale(0.8)",
+          filter: "blur(2px)",
+        },
+        {
+          opacity: 0.95,
+          filter: "blur(0px)",
+          offset: 0.15,
+        },
+        {
+          opacity: 0,
+          transform: `translate(calc(-50% + ${driftX}px), calc(-50% + ${driftY}px)) scale(1.08)`,
+          filter: "blur(1px)",
+        },
+      ],
+      {
+        duration: 850,
+        easing: "ease-out",
+        fill: "forwards",
+      }
+    );
+
+    animation.onfinish = () => particle.remove();
+  });
+</script>
+
+<style>
+  :global(.code-particle) {
+    position: absolute;
+    z-index: 10;
+    max-width: 90%;
+    overflow: hidden;
+    color: #f7f6f2;
+    font-family: monospace;
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 1px 8px rgb(0 0 0 / 75%);
+    will-change: transform, opacity;
+  }
+</style>

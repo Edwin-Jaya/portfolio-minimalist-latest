@@ -1,0 +1,132 @@
+---
+interface Props {
+  src?: string;
+  alt: string;
+  title: string;
+  label: string;
+  fit?: "contain" | "cover";
+}
+
+const {
+  src,
+  alt,
+  title,
+  label,
+  fit = "contain",
+} = Astro.props;
+---
+
+<div
+  data-preview-root
+  class="absolute inset-0 isolate overflow-hidden bg-[#111116]"
+>
+  {src && (
+    <img
+      data-preview-image
+      src={src}
+      alt={alt}
+      title={title}
+      loading="lazy"
+      decoding="async"
+      fetchpriority="low"
+      draggable="false"
+      class:list={[
+        "absolute inset-0 z-20 h-full w-full",
+        fit === "contain" ? "object-contain" : "object-cover",
+      ]}
+    />
+  )}
+
+  <!-- Artistic fallback, also used when no thumbnail is configured. -->
+  <div
+    data-preview-fallback
+    class:list={[
+      "absolute inset-0 z-10 overflow-hidden bg-[#111116] text-white",
+      src ? "hidden" : "",
+    ]}
+  >
+    <div
+      aria-hidden="true"
+      class="absolute inset-0 opacity-70 [background-image:linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.045)_1px,transparent_1px)] [background-size:26px_26px]"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="absolute -right-14 -top-20 h-56 w-56 rounded-full border border-accent/30"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="absolute -right-2 -top-8 h-40 w-40 rounded-full border border-accent/20"
+    ></div>
+    <div
+      aria-hidden="true"
+      class="absolute -bottom-24 -left-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl"
+    ></div>
+
+    <div class="relative flex h-full flex-col justify-between p-5 sm:p-6">
+      <div class="flex items-center justify-between gap-3">
+        <span class="max-w-[75%] truncate rounded-full border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[9px] font-semibold uppercase tracking-[0.18em] text-white/75 backdrop-blur-sm">
+          {label}
+        </span>
+        <span class="text-[9px] uppercase tracking-[0.2em] text-white/40">EJ / 01</span>
+      </div>
+
+      <div class="relative z-10 max-w-[88%]">
+        <span class="mb-3 block h-px w-9 bg-accent"></span>
+        <p class="line-clamp-3 text-base font-semibold leading-snug tracking-[-0.025em] text-white sm:text-lg">
+          {title}
+        </p>
+        <p class="mt-3 text-[9px] font-medium uppercase tracking-[0.2em] text-white/45">
+          Preview unavailable
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {src && (
+    <div
+      aria-hidden="true"
+      class="pointer-events-none absolute inset-0 z-20 bg-gradient-to-tr from-black/15 via-transparent to-white/[0.035]"
+    ></div>
+  )}
+</div>
+
+<script>
+  function initializePreviewThumbnails() {
+    document
+      .querySelectorAll<HTMLElement>("[data-preview-root]")
+      .forEach((root) => {
+        const img = root.querySelector<HTMLImageElement>(
+          "[data-preview-image]",
+        );
+        const fallback = root.querySelector<HTMLElement>(
+          "[data-preview-fallback]",
+        );
+
+        if (!img || !fallback || root.dataset.initialized === "true") {
+          return;
+        }
+
+        root.dataset.initialized = "true";
+
+        const showFallback = () => {
+          img.remove();
+          fallback.classList.remove("hidden");
+        };
+
+        const showImage = () => {
+          fallback.classList.add("hidden");
+        };
+
+        img.addEventListener("error", showFallback, { once: true });
+        img.addEventListener("load", showImage, { once: true });
+
+        if (img.complete) {
+          if (img.naturalWidth > 0) showImage();
+          else showFallback();
+        }
+      });
+  }
+
+  initializePreviewThumbnails();
+  document.addEventListener("astro:page-load", initializePreviewThumbnails);
+</script>

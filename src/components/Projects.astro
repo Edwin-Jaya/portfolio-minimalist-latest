@@ -1,0 +1,90 @@
+---
+import ProjectCard from "./ProjectCard.astro";
+import { projects } from "../data/projects";
+
+const featuredProjects = projects.filter((project) => project.featured);
+const additionalProjects = projects.filter((project) => !project.featured);
+---
+
+<section
+  id="work"
+  aria-labelledby="projects-title"
+  class="scroll-mt-24 bg-background px-5 py-20 sm:px-8 sm:py-24 lg:px-12 lg:py-28"
+>
+  <div class="mx-auto max-w-7xl">
+    <div class="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+      <div class="max-w-2xl">
+        <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-accent sm:text-sm">
+          <span aria-hidden="true" class="h-2 w-2 rounded-full bg-accent"></span>
+          Selected work
+        </p>
+        <h2
+          id="projects-title"
+          class="mt-6 text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-foreground sm:text-5xl lg:text-7xl"
+        >
+          Ideas into<br />
+          <span class="text-muted">real outcomes.</span>
+        </h2>
+      </div>
+
+      <div class="max-w-sm space-y-3">
+        <p class="text-sm leading-relaxed text-muted sm:text-base">
+          A selection of work across AI research, data science, and software engineering—from applied experiments to practical products.
+        </p>
+        <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted">
+          {projects.length} projects <span aria-hidden="true">·</span> Case studies included
+        </p>
+      </div>
+    </div>
+
+    {featuredProjects.length > 0 && (
+      <div class="mt-9 grid grid-cols-1 items-stretch gap-4 sm:mt-12 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+        {featuredProjects.map((project) => (
+          <ProjectCard
+            {...project}
+            caseStudyHref={`/projects/${project.slug}/`}
+          />
+        ))}
+      </div>
+    )}
+
+    {additionalProjects.length > 0 && (
+      <div class="mt-12 border-t border-foreground/10 pt-9 sm:mt-14 sm:pt-11">
+        <div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-accent">More work</p>
+            <h3 class="mt-2 text-xl font-bold tracking-tight text-foreground sm:text-2xl">Additional explorations.</h3>
+          </div>
+          <p class="max-w-md text-xs leading-relaxed text-muted sm:text-sm">
+            Other projects across applied AI, analytics, and software development.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
+          {additionalProjects.map((project) => (
+            <ProjectCard
+              {...project}
+              caseStudyHref={`/projects/${project.slug}/`}
+            />
+          ))}
+        </div>
+      </div>
+    )}
+
+    <div class="mt-10 flex flex-col items-start justify-between gap-5 rounded-2xl border border-foreground/10 bg-foreground/[0.025] p-5 sm:flex-row sm:items-center sm:p-7">
+      <div>
+        <h3 class="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+          Have a project in mind?
+        </h3>
+        <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-muted">
+          Let's explore how thoughtful use of AI, data, and software can help solve it.
+        </p>
+      </div>
+      <a
+        href="#contact"
+        class="group inline-flex shrink-0 items-center gap-2 rounded-full bg-foreground px-5 py-3 text-sm font-semibold text-background transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      >
+        Let's talk <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">↗</span>
+      </a>
+    </div>
+  </div>
+</section>

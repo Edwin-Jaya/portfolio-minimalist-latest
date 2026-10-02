@@ -1,0 +1,68 @@
+---
+const isHome = Astro.url.pathname === "/";
+const sectionHref = (id: string) => isHome ? `#${id}` : `/#${id}`;
+
+const navItems = [
+  { label: "About", href: sectionHref("about") },
+  { label: "Work", href: sectionHref("work") },
+  { label: "Experience", href: sectionHref("experience") },
+  { label: "Expertise", href: sectionHref("expertise") },
+  { label: "Writing", href: sectionHref("writing") },
+];
+---
+
+<header class="sticky top-0 z-50 border-b border-foreground/10 bg-background/90 backdrop-blur-xl">
+  <nav
+    aria-label="Main navigation"
+    class="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12"
+  >
+    <a href="/" data-brand-logo aria-label="Edwin Jaya — Home" class="group flex items-center gap-2 rounded-sm">
+      <span class="text-2xl font-bold tracking-[-0.08em] text-foreground">
+        EJ<span class="text-accent">.</span>
+      </span>
+    </a>
+
+    <div class="hidden items-center gap-7 lg:flex">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class="group relative rounded-sm py-2 text-xs font-medium text-muted transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+        >
+          {item.label}
+          <span aria-hidden="true" class="absolute bottom-0 left-0 h-px w-0 bg-accent transition-all duration-300 group-hover:w-full"></span>
+        </a>
+      ))}
+    </div>
+
+    <a
+      href={sectionHref("contact")}
+      class="hidden items-center gap-2 rounded-full bg-foreground px-4 py-2.5 text-xs font-semibold text-background transition-colors hover:bg-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:inline-flex"
+    >
+      Let's talk <span aria-hidden="true">↗</span>
+    </a>
+
+    <details class="group relative lg:hidden">
+      <summary class="flex cursor-pointer list-none items-center gap-2 rounded-full border border-foreground/15 px-4 py-2.5 text-xs font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-webkit-details-marker]:hidden">
+        Menu <span aria-hidden="true" class="transition-transform group-open:rotate-45">+</span>
+      </summary>
+      <div class="absolute right-0 top-12 w-64 rounded-2xl border border-foreground/10 bg-background p-2 shadow-xl">
+        <div class="flex flex-col">
+          {navItems.map((item) => (
+            <a href={item.href} class="rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-foreground/5 hover:text-accent">{item.label}</a>
+          ))}
+          <a href={sectionHref("contact")} class="mt-1 flex items-center justify-between rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-background transition-colors hover:bg-accent">
+            Let's talk <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    </details>
+  </nav>
+</header>
+
+<script>
+  document.querySelectorAll<HTMLDetailsElement>("header details").forEach((menu) => {
+    menu.querySelectorAll<HTMLAnchorElement>("a").forEach((link) => {
+      link.addEventListener("click", () => menu.removeAttribute("open"));
+    });
+  });
+</script>

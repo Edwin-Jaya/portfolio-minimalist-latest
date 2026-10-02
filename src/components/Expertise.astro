@@ -1,0 +1,123 @@
+
+---
+const areas = [
+  {
+    number: "01",
+    title: "AI & Machine Learning",
+    description:
+      "Experimenting with machine learning models and applying NLP, computer vision, and topic modeling to practical problems.",
+    tools: [
+      "Python",
+      "scikit-learn",
+      "TensorFlow",
+      "PyTorch",
+      "NLP",
+      "Computer Vision",
+      "Topic Modeling",
+    ],
+  },
+  {
+    number: "02",
+    title: "LLM & Intelligent Systems",
+    description:
+      "Building knowledge-grounded AI applications, exploring retrieval pipelines, and integrating language models into useful workflows.",
+    tools: [
+      "RAG",
+      "OpenAI API",
+      "Azure AI Foundry",
+      "LangChain",
+      "Qdrant",
+      "Prompt Engineering",
+    ],
+  },
+  {
+    number: "03",
+    title: "Data & Application Engineering",
+    description:
+      "Working with data pipelines, databases, APIs, and interactive applications to move from analysis to usable software.",
+    tools: [
+      "SQL",
+      "SQL SERVER",
+      "PostgreSQL",
+      "Apache Airflow",
+      "FastAPI",
+      "Streamlit",
+      "Tableau",
+    ],
+  },
+];
+---
+
+<section
+  id="expertise"
+  aria-labelledby="expertise-title"
+  class="scroll-mt-24 bg-[#171717] px-5 py-20 text-white sm:px-8 sm:py-28 lg:px-12 lg:py-32"
+>
+  <div class="mx-auto max-w-7xl">
+    <!-- Section header -->
+    <div class="grid gap-8 md:grid-cols-[1fr_0.65fr] md:items-end">
+      <div>
+        <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-white/60 sm:text-sm">
+          <span class="h-2 w-2 rounded-full bg-[#f27670]"></span>
+          Expertise
+        </p>
+
+        <h2
+          id="expertise-title"
+          class="mt-6 text-4xl font-bold leading-[0.95] tracking-[-0.06em] sm:text-5xl lg:text-7xl"
+        >
+          The tools<br />
+          <span class="text-white/45">behind the ideas.</span>
+        </h2>
+      </div>
+
+      <p class="max-w-md text-sm leading-relaxed text-white/60 sm:text-base">
+        My approach combines AI experimentation, data
+        understanding, and software engineering to build
+        practical, context-aware solutions.
+      </p>
+    </div>
+
+    <!-- Expertise areas -->
+    <div class="mt-14 border-t border-white/15">
+      {areas.map((area) => (
+        <article class="grid gap-6 border-b border-white/15 py-8 md:grid-cols-[70px_0.85fr_1.15fr] md:gap-8 md:py-10">
+          <span class="text-sm font-semibold tracking-wider text-[#f27670]">
+            {area.number}
+          </span>
+
+          <div>
+            <h3 class="text-xl font-semibold tracking-tight sm:text-2xl">
+              {area.title}
+            </h3>
+            <p class="mt-3 max-w-md text-sm leading-relaxed text-white/55">
+              {area.description}
+            </p>
+          </div>
+
+          <ul class="flex flex-wrap content-start gap-2" aria-label={`${area.title} technologies`}>
+            {area.tools.map((tool) => (
+              <li class="rounded-full border border-white/15 px-3.5 py-2 text-xs font-medium text-white/75 transition-colors hover:border-[#f27670] hover:text-white">
+                {tool}
+              </li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+
+    <!-- Current learning -->
+    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
+      <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-[#f27670]">
+        Currently exploring
+      </span>
+      <ul class="flex flex-wrap gap-2">
+        {["Angular", "Spring Boot", "Kotlin"].map((tool) => (
+          <li class="rounded-full bg-white/[0.08] px-3 py-1.5 text-xs text-white/70">
+            {tool}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>

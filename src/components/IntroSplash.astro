@@ -1,0 +1,741 @@
+---
+/**
+ * Minimalist, futuristic brand reveal intro.
+ * Types 'Edwin Liona Jaya', micro-glitches left & right,
+ * reveals a high-speed background code montage square,
+ * then seamlessly morphs and docks into the navbar logo.
+ */
+---
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+    const storageKey = "edwin-brand-intro-v3";
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const isReplay = params.has("intro") || params.has("replay");
+      const alreadySeen = !isReplay && sessionStorage.getItem(storageKey) === "1";
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      if (alreadySeen || reducedMotion) return;
+
+      sessionStorage.setItem(storageKey, "1");
+      root.setAttribute("data-brand-intro", "active");
+
+      // Fail-open fallback
+      window.setTimeout(() => {
+        if (root.getAttribute("data-brand-intro") === "active") {
+          root.removeAttribute("data-brand-intro");
+        }
+      }, 5500);
+    } catch {
+      // Storage unavailable in strict privacy contexts
+    }
+  })();
+</script>
+
+<div
+  data-brand-splash
+  class="brand-splash"
+  aria-label="Edwin Jaya brand reveal"
+>
+  <!-- Minimalist subtle backdrop grid and vignette -->
+  <div class="brand-splash__backdrop" aria-hidden="true">
+    <div class="backdrop-grid"></div>
+    <div class="backdrop-vignette"></div>
+  </div>
+
+  <!-- Center Stage Container -->
+  <div data-intro-stage class="intro-stage">
+    
+    <!-- Code Montage Square in Background -->
+    <div data-intro-frame class="intro-frame" aria-hidden="true">
+      <div class="intro-frame__header">
+        <span class="terminal-dot"></span>
+        <span class="terminal-label">AI_SYS // RUNTIME</span>
+      </div>
+      <canvas data-intro-canvas class="intro-frame__canvas"></canvas>
+      <div class="intro-frame__scanline"></div>
+    </div>
+
+    <!-- Minimalist Futuristic Title with Caret -->
+    <div data-intro-title class="intro-title" aria-label="Edwin Liona Jaya">
+      <span data-intro-text class="intro-text"></span>
+      <span data-intro-caret class="intro-caret" aria-hidden="true"></span>
+    </div>
+
+    <!-- Final Brand Mark that morphs into the navbar logo -->
+    <div data-brand-dock class="intro-dock-mark" aria-hidden="true">
+      EJ<span class="dock-dot">.</span>
+    </div>
+
+  </div>
+
+  <!-- Minimal HUD accents -->
+  <div class="intro-hud-top" aria-hidden="true">
+    <span class="hud-status"><i class="hud-dot"></i> INITIALIZING</span>
+  </div>
+
+  <button
+    type="button"
+    data-intro-skip
+    class="brand-splash__skip"
+    aria-label="Skip brand intro"
+  >
+    SKIP <span aria-hidden="true">↗</span>
+  </button>
+
+  <div class="intro-hud-bottom" aria-hidden="true">
+    <span>EDWIN LIONA JAYA</span>
+    <span class="hud-sep">/</span>
+    <span>AI & SOFTWARE</span>
+  </div>
+</div>
+
+<script>
+  const root = document.documentElement;
+  const splash = document.querySelector<HTMLElement>("[data-brand-splash]");
+
+  if (splash && root.getAttribute("data-brand-intro") === "active") {
+    const textNode = splash.querySelector<HTMLElement>("[data-intro-text]");
+    const caretNode = splash.querySelector<HTMLElement>("[data-intro-caret]");
+    const titleNode = splash.querySelector<HTMLElement>("[data-intro-title]");
+    const frameNode = splash.querySelector<HTMLElement>("[data-intro-frame]");
+    const canvas = splash.querySelector<HTMLCanvasElement>("[data-intro-canvas]");
+    const dockMark = splash.querySelector<HTMLElement>("[data-brand-dock]");
+    const skipButton = splash.querySelector<HTMLButtonElement>("[data-intro-skip]");
+    const navbarLogo = document.querySelector<HTMLElement>("[data-brand-logo]");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const fullName = "Edwin Liona Jaya";
+    const previouslyInert = new Map<HTMLElement, boolean>();
+
+    document.querySelectorAll<HTMLElement>("header, main").forEach((element) => {
+      previouslyInert.set(element, element.inert);
+      element.inert = true;
+    });
+
+    let isExiting = false;
+    let isCleanedUp = false;
+    let canvasAnimId = 0;
+    const timeouts: number[] = [];
+
+    const schedule = (fn: () => void, ms: number) => {
+      const id = window.setTimeout(fn, ms);
+      timeouts.push(id);
+      return id;
+    };
+
+    const cleanup = () => {
+      if (isCleanedUp) return;
+      isCleanedUp = true;
+      timeouts.forEach((id) => window.clearTimeout(id));
+      if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+      root.removeAttribute("data-brand-intro");
+      document.querySelectorAll<HTMLElement>("header, main").forEach((element) => {
+        element.inert = false;
+        element.removeAttribute("inert");
+      });
+      document.removeEventListener("keydown", onKeydown);
+      if (splash.parentNode) {
+        splash.remove();
+      }
+    };
+
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") finishIntro(true);
+    };
+
+    // Code Montage Canvas Setup
+    const codeSnippets = [
+      "const model = await pipeline.load('edwin-ai-v2');",
+      "vector.search(queryEmbedding, { topK: 5 });",
+      "const tensor = tf.tensor2d(embeddings);",
+      "loss.backward(); optimizer.step();",
+      "await agent.dispatch({ task: 'inference' });",
+      "SELECT * FROM vectors ORDER BY cosine_dist LIMIT 10;",
+      "response = await llm.chat({ stream: true });",
+      "pipeline.transform(dataset).fit();",
+      "const tokens = tokenizer.encode(input);",
+      "eval_metrics = evaluate(model, test_loader);",
+      "export const runtime = 'edge';",
+      "return new Response(JSON.stringify(result));",
+      "const rag = new RetrievalAugmentedGen();",
+      "model.eval(); torch.no_grad();",
+      "embeddings = norm(embeddings, p=2, dim=1);",
+      "async function processStream(stream) {",
+    ];
+
+    const codeColors = [
+      "#f7f6f2", // Theme off-white
+      "#b4231e", // Theme accent red
+      "#e5e5e5", // Bright foreground
+      "#9ca3af", // Subtle gray
+      "#fca5a5", // Soft red accent
+      "#d4d4d8", // Silver
+    ];
+
+    let ctx = canvas?.getContext("2d", { alpha: false });
+    let pixelRatio = 1;
+    let canvasW = 0;
+    let canvasH = 0;
+    let lastCodeTime = 0;
+
+    const resizeCanvas = () => {
+      if (!canvas || !frameNode || !ctx) return;
+      const rect = frameNode.getBoundingClientRect();
+      pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      canvasW = rect.width;
+      canvasH = rect.height;
+      canvas.width = Math.round(rect.width * pixelRatio);
+      canvas.height = Math.round(rect.height * pixelRatio);
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const drawCodeFrame = () => {
+      if (!ctx || canvasW <= 0 || canvasH <= 0) return;
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      ctx.fillStyle = "#171717";
+      ctx.fillRect(0, 0, canvasW, canvasH);
+
+      ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+      ctx.textBaseline = "middle";
+
+      const lineHeight = 18;
+      const rows = Math.ceil(canvasH / lineHeight);
+
+      for (let i = 0; i < rows; i++) {
+        const snippet = codeSnippets[Math.floor(Math.random() * codeSnippets.length)];
+        const x = 14 + Math.random() * (canvasW * 0.15);
+        const y = 20 + i * lineHeight;
+
+        ctx.globalAlpha = 0.25 + Math.random() * 0.7;
+        ctx.fillStyle = codeColors[Math.floor(Math.random() * codeColors.length)];
+        ctx.fillText(snippet, x, y);
+      }
+      ctx.globalAlpha = 1;
+    };
+
+    const startCodeMontage = () => {
+      resizeCanvas();
+      const loop = (now: number) => {
+        if (isExiting || isCleanedUp) return;
+        if (now - lastCodeTime >= 45) {
+          drawCodeFrame();
+          lastCodeTime = now;
+        }
+        canvasAnimId = requestAnimationFrame(loop);
+      };
+      canvasAnimId = requestAnimationFrame(loop);
+    };
+
+    const stopCodeMontage = () => {
+      if (canvasAnimId) cancelAnimationFrame(canvasAnimId);
+    };
+
+    const finishIntro = (skip = false) => {
+      if (isExiting) return;
+      isExiting = true;
+      timeouts.forEach((id) => window.clearTimeout(id));
+      stopCodeMontage();
+
+      // Immediately restore interaction to the page and release pointer capture
+      splash.style.pointerEvents = "none";
+      document.querySelectorAll<HTMLElement>("header, main").forEach((element) => {
+        element.inert = false;
+        element.removeAttribute("inert");
+      });
+
+      if (
+        skip ||
+        reducedMotion.matches ||
+        !dockMark ||
+        typeof Element.prototype.animate !== "function"
+      ) {
+        cleanup();
+        return;
+      }
+
+      // Fly to navbar logo
+      const target = navbarLogo?.getBoundingClientRect();
+      const source = dockMark.getBoundingClientRect();
+
+      if (!target || source.width === 0 || source.height === 0) {
+        splash.animate([{ opacity: 1 }, { opacity: 0 }], {
+          duration: 250,
+          easing: "ease-out",
+          fill: "forwards",
+        }).onfinish = cleanup;
+        window.setTimeout(cleanup, 300);
+        return;
+      }
+
+      const dx = (target.left + target.width / 2) - (source.left + source.width / 2);
+      const dy = (target.top + target.height / 2) - (source.top + source.height / 2);
+      const scale = Math.max(0.3, Math.min(1.0, target.height / source.height));
+
+      // Fade out background elements
+      if (frameNode) {
+        frameNode.style.transition = "opacity 200ms ease, transform 200ms ease";
+        frameNode.style.opacity = "0";
+        frameNode.style.transform = "scale(0.92)";
+      }
+      if (titleNode) {
+        titleNode.style.transition = "opacity 160ms ease";
+        titleNode.style.opacity = "0";
+      }
+
+      dockMark.style.opacity = "1";
+      dockMark.animate(
+        [
+          { transform: "translate3d(0, 0, 0) scale(1)", opacity: 1 },
+          { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`, opacity: 1 },
+        ],
+        {
+          duration: 520,
+          easing: "cubic-bezier(0.16, 1, 0.3, 1)",
+          fill: "forwards",
+        }
+      );
+
+      if (navbarLogo) {
+        navbarLogo.animate(
+          [
+            { opacity: 0, transform: "scale(0.85)" },
+            { opacity: 1, transform: "scale(1.12)" },
+            { opacity: 1, transform: "scale(1)" },
+          ],
+          {
+            duration: 300,
+            delay: 420,
+            easing: "cubic-bezier(0.2, 0.8, 0.2, 1)",
+            fill: "forwards",
+          }
+        );
+      }
+
+      const fade = splash.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        {
+          duration: 300,
+          delay: 420,
+          easing: "ease-out",
+          fill: "forwards",
+        }
+      );
+      fade.onfinish = cleanup;
+      window.setTimeout(cleanup, 800);
+    };
+
+    skipButton?.addEventListener("click", () => finishIntro(true), { once: true });
+    document.addEventListener("keydown", onKeydown);
+
+    if (reducedMotion.matches) {
+      finishIntro(true);
+    } else {
+      // ==========================================
+      // STAGE 1: MINIMALIST FUTURISTIC TYPING (0ms - 580ms)
+      // ==========================================
+      const charDelay = 35;
+      const typeStart = 150;
+
+      for (let i = 1; i <= fullName.length; i++) {
+        schedule(() => {
+          if (isExiting || !textNode) return;
+          textNode.textContent = fullName.slice(0, i);
+        }, typeStart + i * charDelay);
+      }
+
+      const typeEnd = typeStart + fullName.length * charDelay;
+
+      // ==========================================
+      // STAGE 2: GLITCH A LITTLE LEFT AND RIGHT (650ms - 880ms)
+      // ==========================================
+      const glitchStart = typeEnd + 100;
+
+      // Glitch Left
+      schedule(() => {
+        if (isExiting || !titleNode) return;
+        titleNode.classList.add("glitch--left");
+      }, glitchStart);
+
+      // Glitch Right
+      schedule(() => {
+        if (isExiting || !titleNode) return;
+        titleNode.classList.remove("glitch--left");
+        titleNode.classList.add("glitch--right");
+      }, glitchStart + 90);
+
+      // Return to center
+      schedule(() => {
+        if (isExiting || !titleNode) return;
+        titleNode.classList.remove("glitch--right");
+      }, glitchStart + 180);
+
+      // ==========================================
+      // STAGE 3: BACKGROUND CODE MONTAGE SQUARE (900ms - 1850ms)
+      // ==========================================
+      const montageStart = glitchStart + 220;
+
+      schedule(() => {
+        if (isExiting || !frameNode) return;
+        frameNode.classList.add("is-visible");
+        titleNode?.classList.add("is-over-code");
+        if (caretNode) caretNode.style.display = "none";
+        startCodeMontage();
+      }, montageStart);
+
+      // ==========================================
+      // STAGE 4: MORPH & DOCK TO NAVBAR LOGO (1850ms)
+      // ==========================================
+      const morphStart = montageStart + 900;
+
+      schedule(() => {
+        if (isExiting) return;
+        // Fade code frame and title, reveal dock mark
+        if (frameNode) {
+          frameNode.classList.remove("is-visible");
+          frameNode.classList.add("is-leaving");
+        }
+        if (titleNode) {
+          titleNode.style.opacity = "0";
+        }
+        if (dockMark) {
+          dockMark.classList.add("is-visible");
+        }
+      }, morphStart);
+
+      // Initiate flight to navbar logo
+      schedule(() => {
+        finishIntro();
+      }, morphStart + 120);
+    }
+  }
+</script>
+
+<style>
+  .brand-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    place-items: center;
+    overflow: hidden;
+    background: var(--color-background, #f7f6f2);
+    color: var(--color-foreground, #171717);
+    font-family: var(--font-jakarta, "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif);
+    isolation: isolate;
+    opacity: 1;
+  }
+
+  :global(html[data-brand-intro="active"] .brand-splash) {
+    display: grid;
+    animation: splash-fade 200ms ease both;
+  }
+
+  :global(html[data-brand-intro="active"] [data-brand-logo]) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* Backdrop Grid & Subtle Atmosphere */
+  .brand-splash__backdrop {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .backdrop-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+      linear-gradient(to right, rgba(23, 23, 23, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(23, 23, 23, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(circle at center, #000 30%, transparent 80%);
+  }
+
+  .backdrop-vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 40%, rgba(23, 23, 23, 0.06) 100%);
+  }
+
+  /* Center Stage Container */
+  .intro-stage {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: min(90vw, 760px);
+    height: clamp(140px, 24vw, 220px);
+  }
+
+  /* Background Code Montage Frame (Square / Modern Box) */
+  .intro-frame {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border: 1px solid rgba(23, 23, 23, 0.12);
+    border-radius: 8px;
+    background: #171717;
+    box-shadow: 0 20px 40px -15px rgba(23, 23, 23, 0.18);
+    opacity: 0;
+    transform: scale(0.92);
+    transition: 
+      opacity 240ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 200ms ease;
+    will-change: transform, opacity;
+  }
+
+  .intro-frame.is-visible {
+    opacity: 1;
+    transform: scale(1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .intro-frame.is-leaving {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  .intro-frame__header {
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    right: 12px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+
+  .terminal-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-accent, #b4231e);
+    box-shadow: 0 0 8px var(--color-accent, #b4231e);
+  }
+
+  .terminal-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: rgba(247, 246, 242, 0.45);
+  }
+
+  .intro-frame__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0.88;
+  }
+
+  .intro-frame__scanline {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.25) 2px,
+      rgba(0, 0, 0, 0.25) 4px
+    );
+  }
+
+  /* Title: Minimalist Futuristic Typing */
+  .intro-title {
+    position: relative;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-jakarta, "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif);
+    font-size: clamp(1.8rem, 5.8vw, 3.8rem);
+    font-weight: 700;
+    letter-spacing: -0.06em;
+    line-height: 1.1;
+    color: var(--color-foreground, #171717);
+    white-space: nowrap;
+    transition: color 240ms ease, opacity 200ms ease;
+    will-change: transform, color;
+  }
+
+  .intro-title.is-over-code {
+    color: #ffffff;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+  }
+
+  .intro-text {
+    display: inline-block;
+  }
+
+  /* Minimalist Caret */
+  .intro-caret {
+    display: inline-block;
+    width: 3px;
+    height: 1.05em;
+    background: var(--color-accent, #b4231e);
+    border-radius: 1px;
+    margin-left: 4px;
+    vertical-align: middle;
+    animation: caret-blink 650ms steps(2, start) infinite;
+  }
+
+  /* ========================================================
+     FUTURISTIC MICRO-GLITCH: A LITTLE LEFT AND RIGHT
+     ======================================================== */
+  .intro-title.glitch--left {
+    transform: translate3d(-10px, 0, 0);
+    text-shadow: 
+      -3px 0 0 rgba(180, 35, 30, 0.85),
+      3px 0 0 rgba(23, 23, 23, 0.3);
+    clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%, 0 65%, 100% 65%, 100% 100%, 0 100%);
+  }
+
+  .intro-title.glitch--right {
+    transform: translate3d(10px, 0, 0);
+    text-shadow: 
+      3px 0 0 rgba(180, 35, 30, 0.85),
+      -3px 0 0 rgba(23, 23, 23, 0.3);
+    clip-path: polygon(0 15%, 100% 15%, 100% 50%, 0 50%, 0 85%, 100% 85%, 100% 100%, 0 100%);
+  }
+
+  /* Final Brand Dock Mark (Navbar Target) */
+  .intro-dock-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    font-family: var(--font-jakarta, "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif);
+    font-size: clamp(2.4rem, 7vw, 3.8rem);
+    font-weight: 700;
+    letter-spacing: -0.08em;
+    line-height: 1;
+    color: var(--color-foreground, #171717);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+    will-change: transform, opacity;
+  }
+
+  .intro-dock-mark .dock-dot {
+    color: var(--color-accent, #b4231e);
+  }
+
+  .intro-dock-mark.is-visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 200ms ease, transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Minimal HUD Decor */
+  .intro-hud-top {
+    position: absolute;
+    top: max(1.25rem, env(safe-area-inset-top));
+    left: max(1.25rem, env(safe-area-inset-left));
+    z-index: 5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    color: var(--color-muted, #656565);
+  }
+
+  .hud-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .hud-dot {
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-accent, #b4231e);
+    animation: hud-pulse 1s infinite alternate;
+  }
+
+  .intro-hud-bottom {
+    position: absolute;
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    left: max(1.25rem, env(safe-area-inset-left));
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-jakarta, ui-sans-serif, system-ui, sans-serif);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--color-muted, #656565);
+  }
+
+  .hud-sep {
+    color: var(--color-border, #deddd8);
+  }
+
+  /* Skip Button */
+  .brand-splash__skip {
+    position: absolute;
+    top: max(1.25rem, env(safe-area-inset-top));
+    right: max(1.25rem, env(safe-area-inset-right));
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid rgba(23, 23, 23, 0.15);
+    border-radius: 999px;
+    background: rgba(247, 246, 242, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 0.55rem 0.85rem;
+    color: var(--color-foreground, #171717);
+    font-family: var(--font-jakarta, ui-sans-serif, system-ui, sans-serif);
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  }
+
+  .brand-splash__skip:hover {
+    border-color: var(--color-accent, #b4231e);
+    background: #171717;
+    color: #ffffff;
+  }
+
+  /* Keyframe Animations */
+  @keyframes splash-fade {
+    from { opacity: 0.5; }
+    to { opacity: 1; }
+  }
+
+  @keyframes caret-blink {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+
+  @keyframes hud-pulse {
+    0% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .brand-splash,
+    .intro-frame,
+    .intro-title,
+    .intro-dock-mark {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>

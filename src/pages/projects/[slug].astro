@@ -1,0 +1,65 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Navbar from "../../components/Navbar.astro";
+import ProjectCaseStudy from "../../components/ProjectCaseStudy.astro";
+import { projects } from "../../data/projects";
+import type { Project } from "../../types/Projects";
+
+interface Props {
+  project: Project;
+  previousProject?: Project;
+  nextProject?: Project;
+}
+
+export function getStaticPaths() {
+  return projects.map((project, index) => ({
+    params: { slug: project.slug },
+    props: {
+      project,
+      previousProject: projects[index - 1],
+      nextProject: projects[index + 1],
+    },
+  }));
+}
+
+const { project, previousProject, nextProject } = Astro.props;
+const canonical = Astro.site
+  ? new URL(`/projects/${project.slug}/`, Astro.site).href
+  : undefined;
+const image = project.image && Astro.site
+  ? new URL(project.image, Astro.site).href
+  : undefined;
+const description = project.caseStudy.introduction;
+
+const creativeWorkSchema = {
+  "@context": "https://schema.org",
+  "@type": "CreativeWork",
+  name: project.title,
+  description,
+  url: canonical,
+  image,
+  creator: {
+    "@type": "Person",
+    name: "Edwin Liona Jaya",
+    url: Astro.site ? new URL("/", Astro.site).href : undefined,
+  },
+  keywords: project.tags.join(", "),
+};
+---
+
+<Layout
+  title={`${project.title} Case Study | Edwin Jaya`}
+  description={description}
+  canonical={canonical}
+  image={project.image}
+  imageAlt={project.imageAlt ?? `${project.title} project preview`}
+  ogType="article"
+  structuredData={creativeWorkSchema}
+>
+  <Navbar />
+  <ProjectCaseStudy
+    project={project}
+    previousProject={previousProject}
+    nextProject={nextProject}
+  />
+</Layout>

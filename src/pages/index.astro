@@ -1,11 +1,51 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import Navbar from "../components/Navbar.astro";
+import Layout from "../layouts/Layout.astro";
+import Hero from "../components/Hero.astro";
+import About from "../components/About.astro";
+import Experience from "../components/Experience.astro";
+import Projects from "../components/Projects.astro";
+import Expertise from "../components/Expertise.astro";
+import Contact from "../components/Contact.astro";
+import WritingMedia from "../components/WritingMedia.astro";
+import IntroSplash from "../components/IntroSplash.astro";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const personSchema = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Edwin Liona Jaya",
+  url: "https://edwinlionajaya.com/",
+  jobTitle: "AI Engineer & Software Developer",
+  sameAs: [
+    "https://github.com/Edwin-Jaya",
+    "https://www.linkedin.com/in/edwin-jaya/",
+    import.meta.env.PUBLIC_TIKTOK_URL,
+    import.meta.env.PUBLIC_INSTAGRAM_URL,
+    import.meta.env.PUBLIC_MEDIUM_URL,
+  ].filter((value): value is string => Boolean(value && /^https:\/\//i.test(value))),
+};
 ---
 
-<Layout>
-	<Welcome />
+<Layout
+  title="Edwin Jaya | AI Engineer, Researcher & Software Developer"
+  description="Explore Edwin Jaya's AI research and software projects, from NLP, computer vision, and RAG to full-stack engineering and data-driven applications."
+  image="/images/og-card.jpg"
+  imageAlt="Edwin Jaya — AI Engineer and Software Developer"
+  structuredData={personSchema}
+>
+  <IntroSplash />
+  <Navbar />
+
+  <main id="main-content">
+    <Hero />
+    <About />
+    <Projects />
+    <Experience />
+    <Expertise />
+    <WritingMedia />
+    <Contact
+      email="edwinlionaj@gmail.com"
+      github="https://github.com/Edwin-Jaya"
+    />
+  </main>
 </Layout>

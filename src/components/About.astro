@@ -1,0 +1,67 @@
+---
+const highlights = [
+  { value: "Global Top 100", label: "Google Solution Challenge · 2024" },
+  { value: "APICTA Finalist", label: "Business Services & R&D · 2024" },
+  { value: "Up to IDR 10M", label: "PKM-KI government funding" },
+];
+---
+
+<section
+  id="about"
+  aria-labelledby="about-title"
+  class="scroll-mt-24 bg-background px-5 py-20 sm:px-8 sm:py-24 lg:px-12 lg:py-28"
+>
+  <div class="mx-auto max-w-7xl">
+    <div class="grid gap-10 lg:grid-cols-[0.7fr_1.3fr] lg:gap-24">
+      <div>
+        <p class="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.22em] text-accent sm:text-sm">
+          <span aria-hidden="true" class="h-2 w-2 rounded-full bg-accent"></span>
+          About me
+        </p>
+        <h2 id="about-title" class="mt-6 text-4xl font-bold leading-[0.95] tracking-[-0.06em] text-foreground sm:text-5xl lg:text-6xl">
+          Curious by nature.<br />
+          <span class="text-muted">Grounded in practice.</span>
+        </h2>
+      </div>
+
+      <div class="max-w-2xl">
+        <p class="text-xl font-medium leading-relaxed tracking-tight text-foreground sm:text-2xl">
+          I'm Edwin, an Informatics Engineering graduate working in financial services, with a background in AI research and software development.
+        </p>
+        <div class="mt-5 space-y-4 text-sm leading-[1.9] text-muted sm:text-base">
+          <p>
+            My experience spans NLP, computer vision, topic modeling, and retrieval-augmented generation, alongside full-stack projects involving interface design, APIs, testing, and deployment.
+          </p>
+          <p>
+            I'm interested in connecting research with practical engineering—especially where AI, data, and financial services meet. I also enjoy sharing what I learn through writing and technology content.
+          </p>
+        </div>
+        <div class="mt-7 flex flex-wrap gap-3">
+          <a href="#work" class="group inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+            Explore selected work <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">↗</span>
+          </a>
+          <span aria-hidden="true" class="text-muted">·</span>
+          <a
+            href="https://drive.google.com/file/d/1nIeb3mufFINPRpMrllzj9F2uYuW641WF/view?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+          >
+            View CV <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">↗</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-12 grid grid-cols-1 gap-px overflow-hidden border-y border-foreground/10 bg-foreground/10 sm:grid-cols-3">
+      {highlights.map((item) => (
+        <div class="bg-background py-6 sm:px-5 sm:py-7">
+          <p class="text-xl font-bold tracking-[-0.05em] text-foreground sm:text-2xl">
+            {item.value}<span class="text-accent">.</span>
+          </p>
+          <p class="mt-1.5 text-xs leading-relaxed text-muted sm:text-sm">{item.label}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
