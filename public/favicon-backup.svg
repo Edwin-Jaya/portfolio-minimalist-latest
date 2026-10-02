@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" fill="none">
+  <style>
+    :root { --bg: #0a0a0a; --fg: #f0f0f0; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #ffffff; --fg: #0a0a0a; }
+    }
+    .bg  { fill: var(--bg); }
+    .fg  { fill: var(--fg); }
+    .acc { fill: #00e5ff; }
+  </style>
+
+  <!-- Background -->
+  <rect class="bg" width="128" height="128" rx="20"/>
+
+  <!-- E: vertical stem -->
+  <rect class="fg" x="18" y="30" width="7" height="68"/>
+  <!-- E: top bar -->
+  <rect class="fg" x="18" y="30" width="40" height="7"/>
+  <!-- E: mid bar -->
+  <rect class="fg" x="18" y="61" width="32" height="6"/>
+  <!-- E: bottom bar -->
+  <rect class="fg" x="18" y="91" width="40" height="7"/>
+
+  <!-- J: top bar -->
+  <rect class="fg" x="58" y="30" width="36" height="7"/>
+  <!-- J: vertical stem -->
+  <rect class="fg" x="80" y="30" width="7" height="54"/>
+  <!-- J: bottom hook horizontal -->
+  <rect class="fg" x="58" y="77" width="29" height="7" rx="3.5"/>
+  <!-- J: bottom hook vertical -->
+  <rect class="fg" x="58" y="77" width="7" height="14" rx="3.5"/>
+
+  <!-- Accent dot -->
+  <circle class="acc" cx="108" cy="97" r="8"/>
+</svg>
