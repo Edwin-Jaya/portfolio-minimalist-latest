@@ -1,4 +1,4 @@
-# Edwin Jaya — Portfolio
+# Edwin Liona Jaya — Portfolio
 
 Personal portfolio built with Astro and Tailwind CSS v4.
 
