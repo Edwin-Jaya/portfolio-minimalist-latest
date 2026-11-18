@@ -20,12 +20,17 @@ const areas = [
     number: "02",
     title: "LLM & Intelligent Systems",
     description:
-      "Building knowledge-grounded AI applications, exploring retrieval pipelines, and integrating language models into useful workflows.",
+      "Building knowledge-grounded AI systems: RAG, text-to-SQL over business databases, and document AI pipelines with hosted and self-hosted models.",
     tools: [
       "RAG",
-      "OpenAI API",
+      "Text-to-SQL",
+      "Azure OpenAI",
       "Azure AI Foundry",
+      "Document Intelligence",
       "LangChain",
+      "PandasAI",
+      "Gemma",
+      "Hugging Face",
       "Qdrant",
       "Prompt Engineering",
     ],
@@ -34,14 +39,20 @@ const areas = [
     number: "03",
     title: "Data & Application Engineering",
     description:
-      "Working with data pipelines, databases, APIs, and interactive applications to move from analysis to usable software.",
+      "Working with databases, APIs, data pipelines, and full-stack applications to take AI from prototype to deployed software.",
     tools: [
       "SQL",
-      "SQL SERVER",
+      "SQL Server",
       "PostgreSQL",
       "Apache Airflow",
       "FastAPI",
       "Streamlit",
+      "Angular",
+      "Spring Boot",
+      "Kotlin",
+      "GCP",
+      "Firebase",
+      "CI/CD",
       "Tableau",
     ],
   },
@@ -106,18 +117,5 @@ const areas = [
       ))}
     </div>
 
-    <!-- Current learning -->
-    <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-      <span class="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-[#f27670]">
-        Currently exploring
-      </span>
-      <ul class="flex flex-wrap gap-2">
-        {["Angular", "Spring Boot", "Kotlin"].map((tool) => (
-          <li class="rounded-full bg-white/[0.08] px-3 py-1.5 text-xs text-white/70">
-            {tool}
-          </li>
-        ))}
-      </ul>
-    </div>
   </div>
 </section>

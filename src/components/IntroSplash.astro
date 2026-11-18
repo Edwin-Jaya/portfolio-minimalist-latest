@@ -30,7 +30,7 @@
         if (root.getAttribute("data-brand-intro") === "active") {
           root.removeAttribute("data-brand-intro");
         }
-      }, 5500);
+      }, 3500);
     } catch {
       // Storage unavailable in strict privacy contexts
     }
@@ -337,10 +337,10 @@
       finishIntro(true);
     } else {
       // ==========================================
-      // STAGE 1: MINIMALIST FUTURISTIC TYPING (0ms - 580ms)
+      // STAGE 1: MINIMALIST FUTURISTIC TYPING (0ms - ~410ms)
       // ==========================================
-      const charDelay = 35;
-      const typeStart = 150;
+      const charDelay = 22;
+      const typeStart = 60;
 
       for (let i = 1; i <= fullName.length; i++) {
         schedule(() => {
@@ -352,9 +352,9 @@
       const typeEnd = typeStart + fullName.length * charDelay;
 
       // ==========================================
-      // STAGE 2: GLITCH A LITTLE LEFT AND RIGHT (650ms - 880ms)
+      // STAGE 2: GLITCH A LITTLE LEFT AND RIGHT (~450ms - ~590ms)
       // ==========================================
-      const glitchStart = typeEnd + 100;
+      const glitchStart = typeEnd + 40;
 
       // Glitch Left
       schedule(() => {
@@ -367,18 +367,18 @@
         if (isExiting || !titleNode) return;
         titleNode.classList.remove("glitch--left");
         titleNode.classList.add("glitch--right");
-      }, glitchStart + 90);
+      }, glitchStart + 70);
 
       // Return to center
       schedule(() => {
         if (isExiting || !titleNode) return;
         titleNode.classList.remove("glitch--right");
-      }, glitchStart + 180);
+      }, glitchStart + 140);
 
       // ==========================================
-      // STAGE 3: BACKGROUND CODE MONTAGE SQUARE (900ms - 1850ms)
+      // STAGE 3: BACKGROUND CODE MONTAGE SQUARE (~610ms - ~990ms)
       // ==========================================
-      const montageStart = glitchStart + 220;
+      const montageStart = glitchStart + 160;
 
       schedule(() => {
         if (isExiting || !frameNode) return;
@@ -389,9 +389,9 @@
       }, montageStart);
 
       // ==========================================
-      // STAGE 4: MORPH & DOCK TO NAVBAR LOGO (1850ms)
+      // STAGE 4: MORPH & DOCK TO NAVBAR LOGO (~990ms)
       // ==========================================
-      const morphStart = montageStart + 900;
+      const morphStart = montageStart + 380;
 
       schedule(() => {
         if (isExiting) return;
@@ -411,7 +411,7 @@
       // Initiate flight to navbar logo
       schedule(() => {
         finishIntro();
-      }, morphStart + 120);
+      }, morphStart + 80);
     }
   }
 </script>

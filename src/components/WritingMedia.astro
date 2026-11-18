@@ -273,21 +273,23 @@ if (mediumFeedUrl) {
 // Social content
 // --------------------------------------------------
 
+// TikTok posts render as a link-out card: TikTok's iframe player currently
+// fails with "Player authentication failed", even on the live site.
 const socialPostInputs: SocialPostInput[] = [
   {
     platform: "Instagram",
-    url: "https://www.instagram.com/p/DXVxOcHTYon/",
-    title: "Explaining RAG",
+    url: "https://www.instagram.com/p/DfT6I3kyZyN/",
+    title: "Can AI Build AI?",
   },
   {
     platform: "TikTok",
-    url: "https://www.tiktok.com/@edwinjaya.py/video/7625088576409144594",
-    title: "Explaining Sigmoid",
+    url: "https://www.tiktok.com/@edwinjaya.py/video/7683509113510251794",
+    title: "A Day in the Life of an IT Management Trainee at BCA Finance",
   },
-    {
+  {
     platform: "Instagram",
-    url: "https://www.instagram.com/p/DXD1ocnk0gR/",
-    title: "Explaining LM Studio",
+    url: "https://www.instagram.com/p/DfeOl00RYGN/",
+    title: "Will Humans Truly Lose Control of AI?",
   },
 ];
 
@@ -328,50 +330,15 @@ const mediaInputs: MediaInput[] = [
     headline: "Tim Socialabs UNIKOM Berhasil Menjadi Finalis APICTA 2024",
   },
   {
-    href: "https://www.instagram.com/p/DD8Wrd7SA05/",
-    publication: "Instagram",
-    headline: "APICTA Awards - UNIKOM",
-  },
-  {
-    href: "https://www.instagram.com/p/DD3dV7BphRU/?img_index=2",
-    publication: "Instagram",
-    headline: "APICTA Awards - Codelabs",
-  },
-  {
     href: "https://blog.google/intl/id-id/company-news/outreach-initiatives/ayo-semangati-14-developer-muda-indonesia-menuju-final-solution-challenge/",
     publication: "Google",
     headline: "Ayo Semangati 14 Developer Muda Indonesia Menuju Final Solution Challenge",
-  },
-  {
-    href: "https://news.ums.ac.id/id/medcom-id/14-developer-muda-indonesia-menuju-final-solution-challenge/",
-    publication: "Universitas Muhammadiyah Surakarta",
-    headline: "14 Developer Muda Indonesia Menuju Final Solution Challenge",
-  },
-  {
-    href: "https://infokomputer.grid.id/read/124075504/14-developer-indonesia-masuk-semifinal-google-solution-challenge",
-    publication: "InfoKomputer",
-    headline: "14 Developer Indonesia Masuk Semifinal Google Solution Challenge",
   },
   {
     href: "https://prestasi.unikom.ac.id/view/575",
     publication: "UNIKOM",
     headline: "Lolos Pendanaan PKM-KI",
   },
-  {
-    href: "https://prestasi.unikom.ac.id/view/623",
-    publication: "UNIKOM",
-    headline: "Finalis APICTA Research and Development (CC-RD)",
-  },
-  {
-    href: "https://prestasi.unikom.ac.id/view/622",
-    publication: "UNIKOM",
-    headline: "Finalis APICTA Business Services (HC-BS)",
-  },
-  {
-    href: "https://prestasi.unikom.ac.id/view/576",
-    publication: "UNIKOM",
-    headline: "Global Top 100 Google Solution Challenge 2024",
-  }
 ];
 
 const mediaItems: MediaItem[] = mediaInputs.flatMap((item) => {
@@ -597,17 +564,24 @@ const mediaItems: MediaItem[] = mediaInputs.flatMap((item) => {
                     </div>
                   </div>
                 ) : post.platform === "TikTok" && getTikTokVideoId(post.href) ? (
-                  <div class="mx-auto aspect-[9/16] w-full max-w-[220px] overflow-hidden rounded-t-2xl bg-[#111116]">
-                    <iframe
-                      src={`https://www.tiktok.com/player/v1/${getTikTokVideoId(post.href)}?controls=1&description=1`}
-                      title={`TikTok video: ${post.title ?? "Featured video"}`}
-                      loading="lazy"
-                      allow="fullscreen; encrypted-media; picture-in-picture"
-                      allowfullscreen
-                      referrerpolicy="strict-origin-when-cross-origin"
-                      class="h-full w-full border-0"
-                    ></iframe>
-                  </div>
+                  <a
+                    href={post.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Watch on TikTok: ${post.title ?? "Featured video"}`}
+                    class="group/tt relative flex aspect-[9/14] w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-t-2xl bg-[#111116] p-6 text-center text-white focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-accent"
+                  >
+                    <span aria-hidden="true" class="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#25f4ee]/20 blur-3xl"></span>
+                    <span aria-hidden="true" class="pointer-events-none absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-[#fe2c55]/25 blur-3xl"></span>
+                    <span class="relative text-[10px] font-semibold uppercase tracking-[0.2em] text-white/60">@edwinjaya.py</span>
+                    <span aria-hidden="true" class="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/25 transition-transform duration-300 group-hover/tt:scale-110">
+                      <svg viewBox="0 0 24 24" class="ml-1 h-7 w-7 fill-white"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                    {post.title && <span class="relative max-w-[16rem] text-lg font-bold leading-tight tracking-tight">{post.title}</span>}
+                    <span class="relative inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[#111116] transition-colors group-hover/tt:bg-[#fe2c55] group-hover/tt:text-white">
+                      Watch on TikTok <span aria-hidden="true">↗</span>
+                    </span>
+                  </a>
                 ) : (
                   <div class="flex min-h-36 items-center justify-center rounded-t-2xl bg-foreground/[0.025] p-5 text-center">
                     <a href={post.href} target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-foreground transition-colors hover:text-accent">

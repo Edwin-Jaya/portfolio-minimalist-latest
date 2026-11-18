@@ -13,8 +13,8 @@ export const projects: Project[] = [
     year: "2024",
     visualLabel: "SOCIALABS",
     description:
-      "An X/Twitter analytics platform featuring topic modeling, network analysis, influencer discovery, sentiment and emotion analysis, and conversational exploration.",
-    tags: ["Python", "NLP", "Topic Modeling", "Sentiment Analysis", "LLM"],
+      "An X/Twitter analytics platform with embedded topic modeling, sentiment, network analysis, influencer discovery, and a RAG chatbot that answers questions over the collected tweets.",
+    tags: ["Python", "NLP", "Topic Modeling", "RAG", "Azure OpenAI"],
     outcome:
       "APICTA Awards 2024 finalist in Business Services & R&D, representing Indonesia. User research included 10 interviews and a reported 40% workflow improvement.",
     imageAlt: "Socialabs social media intelligence platform",
@@ -50,7 +50,7 @@ export const projects: Project[] = [
       introduction:
         "An X/Twitter analytics platform designed to make social-media data easier to explore through NLP, network analysis, and conversational interaction.",
       overview:
-        "Socialabs brings multiple forms of social-media analysis together, including topic modeling, network analysis, influencer discovery, sentiment and emotion analysis, and a chatbot for conversational exploration.",
+        "Socialabs brings multiple forms of social-media analysis together, including topic modeling, network analysis, influencer discovery, sentiment and emotion analysis, and a RAG chatbot for conversational exploration. LDA was replaced with embedded topic modeling, validated by coherence scores and human evaluation, with LLM-generated topic labels and summaries.",
       role: "AI Engineer Lead",
       focus: [
         {
@@ -69,9 +69,9 @@ export const projects: Project[] = [
             "Analyze the expressed sentiment and emotions in social-media content as part of the analytics experience.",
         },
         {
-          title: "Conversational exploration",
+          title: "RAG chatbot",
           description:
-            "A chatbot provides another way to explore social-media insights through natural-language interaction.",
+            "A RAG chatbot built with Azure OpenAI and AI Foundry retrieves the collected tweets for each topic and answers questions with responses grounded in them.",
         },
       ],
       metrics: [
@@ -103,10 +103,10 @@ export const projects: Project[] = [
     year: "2024",
     visualLabel: "DOKO",
     description:
-      "An AI-assisted waste-classification project combining a deep learning model with a Unity-based interactive experience.",
-    tags: ["Python", "Deep Learning", "ONNX", "Unity", "Computer Vision"],
+      "An AI-assisted waste-sorting learning app for children: a TensorFlow image classifier deployed via ONNX inside a Unity experience.",
+    tags: ["Python", "TensorFlow", "ONNX", "Unity", "Computer Vision"],
     outcome:
-      "Tested with over 300 children in Bandung; the project brief reports a 70% improvement in recycling skills and recognition among 14 Indonesian teams in the 2024 Google Solution Challenge.",
+      "Google Solution Challenge 2024 Global Top 100. Across 300 students in 5 elementary schools, the share who could sort waste correctly rose from 35% to 65%.",
     imageAlt: "Doko AI waste classification project",
     image: "/images/projects/gallery/doko-learning.webp",
     imageWidth: 1400,
@@ -149,7 +149,7 @@ export const projects: Project[] = [
         {
           title: "Waste classification",
           description:
-            "A deep learning model supports AI-assisted classification of waste items.",
+            "A TensorFlow image classifier recognizes waste items so children get feedback on how to sort them.",
         },
         {
           title: "Model integration",
@@ -164,23 +164,23 @@ export const projects: Project[] = [
       ],
       metrics: [
         {
-          value: "300+",
-          label: "Children involved in testing",
-          detail: "The project brief reports testing with more than 300 children in Bandung.",
+          value: "300",
+          label: "Students in testing",
+          detail: "Tested with 300 students across 5 elementary schools.",
         },
         {
-          value: "70%",
-          label: "Reported skill improvement",
-          detail: "The project brief reports a 70% improvement in recycling skills.",
+          value: "35% → 65%",
+          label: "Students sorting waste correctly",
+          detail: "The share of students who could sort waste correctly rose from 35% to 65%.",
         },
         {
-          value: "14 teams",
-          label: "Indonesian representation",
-          detail: "The project was associated with the 2024 Google Solution Challenge and the group of 14 Indonesian teams.",
+          value: "Top 100",
+          label: "Google Solution Challenge 2024",
+          detail: "Global Top 100, one of 14 Indonesian teams recognized that year.",
         },
       ],
       outcome:
-        "The project brief records testing with more than 300 children in Bandung and a reported 70% improvement in recycling skills. It also notes recognition among 14 Indonesian teams in the 2024 Google Solution Challenge. Evaluation details should be linked where available.",
+        "Doko reached the Global Top 100 of the 2024 Google Solution Challenge. Across 300 students in 5 elementary schools, the share who could sort waste correctly rose from 35% to 65%.",
     },
   },
   {
@@ -327,7 +327,6 @@ export const projects: Project[] = [
     image: "/images/projects/bekal.webp",
     imageWidth: 1918,
     imageHeight: 905,
-    featured: true,
     links: [
       { label: "Live application", href: "https://bekal-tau.vercel.app/", kind: "demo" },
     ],
@@ -364,64 +363,17 @@ export const projects: Project[] = [
     },
   },
   {
-    slug: "wisdom-paws",
-    number: "06",
-    title: "Wisdom Paws",
-    category: "AI · COMPUTER VISION",
-    year: "2024",
-    visualLabel: "WISDOM PAWS",
-    description:
-      "An interactive AI virtual pet combining hand-gesture recognition and AI-generated responses to explore natural interactions with intelligent applications.",
-    tags: ["Python", "MediaPipe", "Computer Vision", "LLM"],
-    outcome:
-      "Combines visual gesture interaction and conversational AI in an interactive experience.",
-    href: "https://edwin-jaya.github.io/WisdomPaws/",
-    imageAlt: "Wisdom Paws interactive AI virtual pet",
-    image: "/images/projects/wisdom-paws.webp",
-    imageWidth: 1920,
-    imageHeight: 912,
-    links: [
-      { label: "Live demo", href: "https://edwin-jaya.github.io/WisdomPaws/", kind: "demo" },
-      { label: "GitHub repository", href: "https://github.com/Edwin-Jaya/WisdomPaws", kind: "repository" },
-    ],
-    caseStudy: {
-      introduction:
-        "An interactive virtual pet that brings together hand-gesture recognition and AI-generated responses to explore more natural ways of interacting with an application.",
-      overview:
-        "Wisdom Paws combines computer vision and conversational AI in an interactive virtual-pet experience. Hand gestures provide a visual interaction channel, while an LLM supports AI-generated responses.",
-      focus: [
-        {
-          title: "Gesture interaction",
-          description:
-            "MediaPipe supports hand-gesture recognition as an input for interacting with the virtual pet.",
-        },
-        {
-          title: "Conversational AI",
-          description:
-            "An LLM is used to generate responses within the interactive experience.",
-        },
-        {
-          title: "Integrated experience",
-          description:
-            "The project combines visual input and generated responses to explore an alternative interaction model for an intelligent application.",
-        },
-      ],
-      outcome:
-        "The result is an interactive concept that brings computer vision and language-model capabilities into one virtual-pet experience. A formal evaluation or user study is not specified in the current project brief.",
-    },
-  },
-  {
     slug: "telkomsel-dsw-dashboard",
-    number: "07",
-    title: "Telkomsel DSW Customer Churn Dashboard",
+    number: "06",
+    title: "Telkomsel DSW Customer Churn Dashboard (Finalist)",
     category: "DATA SCIENCE · ANALYTICS",
     year: "2024",
     visualLabel: "DSW DASHBOARD",
     description:
-      "A customer segmentation and churn-analysis dashboard developed using RFM analysis and K-Means, presented at Data Science Weekend.",
+      "A customer segmentation and churn-analysis dashboard developed using RFM analysis and K-Means; finalist at Data Science Weekend.",
     tags: ["Python", "RFM Analysis", "K-Means", "Customer Segmentation", "Dashboard"],
     outcome:
-      "The project led to an invitation to present the dashboard at Telkomsel in South Jakarta.",
+      "Finalist at Data Science Weekend, with an invitation to present the dashboard at Telkomsel in South Jakarta.",
     imageAlt: "Customer segmentation and churn analytics dashboard",
     image: "/images/projects/gallery/dsw-dashboard.webp",
     imageWidth: 1400,
@@ -468,6 +420,53 @@ export const projects: Project[] = [
       ],
       outcome:
         "The project enabled the team to present customer analytics at Telkomsel. No quantified business impact is claimed here.",
+    },
+  },
+  {
+    slug: "wisdom-paws",
+    number: "07",
+    title: "Wisdom Paws",
+    category: "AI · COMPUTER VISION",
+    year: "2024",
+    visualLabel: "WISDOM PAWS",
+    description:
+      "An interactive AI virtual pet combining hand-gesture recognition and AI-generated responses to explore natural interactions with intelligent applications.",
+    tags: ["Python", "MediaPipe", "Computer Vision", "LLM"],
+    outcome:
+      "Combines visual gesture interaction and conversational AI in an interactive experience.",
+    href: "https://edwin-jaya.github.io/WisdomPaws/",
+    imageAlt: "Wisdom Paws interactive AI virtual pet",
+    image: "/images/projects/wisdom-paws.webp",
+    imageWidth: 1920,
+    imageHeight: 912,
+    links: [
+      { label: "Live demo", href: "https://edwin-jaya.github.io/WisdomPaws/", kind: "demo" },
+      { label: "GitHub repository", href: "https://github.com/Edwin-Jaya/WisdomPaws", kind: "repository" },
+    ],
+    caseStudy: {
+      introduction:
+        "An interactive virtual pet that brings together hand-gesture recognition and AI-generated responses to explore more natural ways of interacting with an application.",
+      overview:
+        "Wisdom Paws combines computer vision and conversational AI in an interactive virtual-pet experience. Hand gestures provide a visual interaction channel, while an LLM supports AI-generated responses.",
+      focus: [
+        {
+          title: "Gesture interaction",
+          description:
+            "MediaPipe supports hand-gesture recognition as an input for interacting with the virtual pet.",
+        },
+        {
+          title: "Conversational AI",
+          description:
+            "An LLM is used to generate responses within the interactive experience.",
+        },
+        {
+          title: "Integrated experience",
+          description:
+            "The project combines visual input and generated responses to explore an alternative interaction model for an intelligent application.",
+        },
+      ],
+      outcome:
+        "The result is an interactive concept that brings computer vision and language-model capabilities into one virtual-pet experience. A formal evaluation or user study is not specified in the current project brief.",
     },
   },
   {
