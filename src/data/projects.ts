@@ -244,9 +244,9 @@ export const projects: Project[] = [
       ],
       metrics: [
         {
-          value: "Up to IDR 10M",
-          label: "PKM-KI 2024 funding",
-          detail: "Government-backed program funding recorded in the portfolio.",
+          value: "National Grant",
+          label: "PKM-KI 2024",
+          detail: "Government-funded national grant from the Ministry of Education.",
         },
         {
           value: "3+",
@@ -255,7 +255,7 @@ export const projects: Project[] = [
         },
       ],
       outcome:
-        "EduClassAI received PKM-KI 2024 funding of up to IDR 10 million and was adopted by more than three universities in Bandung, as recorded in the current portfolio.",
+        "EduClassAI received a PKM-KI 2024 national grant and was adopted by more than three universities in Bandung, as recorded in the current portfolio.",
     },
   },
   {
